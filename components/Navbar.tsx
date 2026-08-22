@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const activeExam = exams.find(e => e.id === activeExamId) || exams[0];
 
   return (
-    <header className="bg-white text-slate-800 border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <header className="bg-white text-slate-800 border-b border-slate-200 sticky top-0 z-40 shadow-sm print:hidden">
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
         {/* Brand & App Title */}

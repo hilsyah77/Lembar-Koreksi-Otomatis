@@ -157,7 +157,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased print:bg-white print:min-h-0 print:p-0">
       {/* Top Navigation Header */}
       <Navbar
         activeTab={activeTab}
@@ -174,7 +174,7 @@ export default function Home() {
       />
 
       {/* Main Content Router */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-16 print:p-0 print:m-0 print:pb-0">
         {activeTab === 'CAMERA' && (
           <CameraScanner
             exam={activeExam}

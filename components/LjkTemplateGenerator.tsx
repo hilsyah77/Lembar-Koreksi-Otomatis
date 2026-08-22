@@ -54,9 +54,29 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 print:max-w-none print:w-full print:p-0 print:m-0 print:space-y-0">
+      {/* Embedded Print Stylesheet */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 4mm 6mm;
+          }
+          html, body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
+
       {/* Header Info Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-xs">
             <FileText className="w-6 h-6" />
@@ -96,9 +116,9 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* Main Studio Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:block print:w-full print:p-0 print:m-0">
         {/* Left: Customizer Controls */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-4 print:hidden">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2 pb-3.5 border-b border-slate-100">
               <Sliders className="w-4 h-4 text-blue-600" />
@@ -203,9 +223,9 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         </div>
 
         {/* Right: High-Fidelity Interactive Visual Preview */}
-        <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center justify-between text-xs text-slate-500 pb-3 border-b border-slate-100">
+        <div className="lg:col-span-8 print:w-full print:p-0 print:m-0">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col gap-3 print:border-none print:shadow-none print:p-0 print:m-0 print:bg-white">
+            <div className="flex items-center justify-between text-xs text-slate-500 pb-3 border-b border-slate-100 print:hidden">
               <span className="font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-600" />
                 Pratinjau Lembar A4 Landscape (Isi 2 LJK Siswa Kiri & Kanan)
@@ -214,11 +234,14 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             </div>
 
             {/* A4 Landscape Virtual Sheet (White Paper Container) */}
-            <div className="bg-slate-100 rounded-xl p-4 sm:p-6 border border-slate-200 overflow-x-auto select-none print:m-0 print:p-0 print:border-none">
-              <div className="min-w-[680px] grid grid-cols-2 gap-4 relative bg-white p-4 rounded-lg shadow-md border border-slate-300">
+            <div className="bg-slate-100 rounded-xl p-4 sm:p-6 border border-slate-200 overflow-x-auto select-none print:m-0 print:p-0 print:border-none print:bg-white print:overflow-visible print:rounded-none">
+              <div className="min-w-[680px] print:min-w-0 print:w-full grid grid-cols-2 gap-4 print:gap-4 relative bg-white p-4 print:p-0 rounded-lg print:rounded-none shadow-md print:shadow-none border border-slate-300 print:border-none">
                 {/* Left & Right A5 Sheets */}
                 {[1, 2].map(sheetIdx => (
-                  <div key={sheetIdx} className="border border-slate-300 rounded-lg p-3 bg-white flex flex-col justify-between relative text-[10px]">
+                  <div 
+                    key={sheetIdx} 
+                    className="border border-slate-400 print:border-2 print:border-black rounded-lg print:rounded-none p-3 print:p-3 bg-white flex flex-col justify-between relative text-[10px] print:text-[8px]"
+                  >
                     {/* 4 Corner Fiducial Markers */}
                     <div className="absolute top-2 left-2 w-2.5 h-2.5 bg-black" />
                     <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-black" />
@@ -227,28 +250,28 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
                     {/* Sheet Header */}
                     <div className="text-center px-4">
-                      <div className="font-black text-[11px] uppercase tracking-tight text-slate-900">{teacher.namaSekolah}</div>
-                      <div className="font-bold text-[9px] text-slate-800">LEMBAR JAWABAN KOMPUTER (LJK) MINIMALIS</div>
-                      <div className="text-[8px] text-slate-600 mt-0.5 font-medium">
+                      <div className="font-black text-[11px] print:text-[9.5px] uppercase tracking-tight text-slate-900 print:text-black">{teacher.namaSekolah}</div>
+                      <div className="font-bold text-[9px] print:text-[8px] text-slate-800 print:text-black">LEMBAR JAWABAN KOMPUTER (LJK) MINIMALIS</div>
+                      <div className="text-[8px] print:text-[7px] text-slate-600 print:text-slate-800 mt-0.5 font-medium">
                         {exam.subject} • {exam.gradeClass} • Th. {teacher.tahunAjaran}
                       </div>
-                      <div className="border-b border-slate-900 my-1.5"></div>
+                      <div className="border-b border-slate-900 print:border-black my-1.5"></div>
                     </div>
 
                     {/* Student Info Box */}
                     <div className="grid grid-cols-12 gap-2 my-1">
                       {/* Left: Name & Number */}
-                      <div className="col-span-8 border border-slate-400 rounded p-1.5 bg-slate-50">
-                        <div className="font-bold text-[8px] text-slate-900">NAMA PESERTA:</div>
-                        <div className="h-4 border border-slate-300 bg-white rounded my-0.5"></div>
+                      <div className="col-span-8 border border-slate-400 print:border-slate-800 rounded p-1.5 bg-slate-50 print:bg-white">
+                        <div className="font-bold text-[8px] print:text-[7px] text-slate-900 print:text-black">NAMA PESERTA:</div>
+                        <div className="h-4 border border-slate-300 print:border-slate-800 bg-white rounded my-0.5"></div>
 
-                        <div className="font-bold text-[8px] text-slate-900 mt-1">NOMOR PESERTA (9 DIGIT):</div>
+                        <div className="font-bold text-[8px] print:text-[7px] text-slate-900 print:text-black mt-1">NOMOR PESERTA (9 DIGIT):</div>
                         <div className="flex justify-between mt-1">
                           {Array.from({ length: 9 }).map((_, cIdx) => (
                             <div key={cIdx} className="flex flex-col items-center">
-                              <div className="w-2.5 h-3 border border-slate-300 bg-white text-[7px] text-center mb-0.5 font-mono"></div>
+                              <div className="w-2.5 h-3 border border-slate-300 print:border-slate-800 bg-white text-[7px] text-center mb-0.5 font-mono"></div>
                               {Array.from({ length: 10 }).map((_, rIdx) => (
-                                <span key={rIdx} className="w-2 h-2 rounded-full border border-slate-600 text-[6px] flex items-center justify-center my-[0.5px] font-bold text-slate-700">
+                                <span key={rIdx} className="w-2 h-2 rounded-full border border-slate-600 print:border-black text-[6px] flex items-center justify-center my-[0.5px] font-bold text-slate-700 print:text-black">
                                   {rIdx}
                                 </span>
                               ))}
@@ -259,28 +282,28 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
                       {/* Right: Packet & Signature */}
                       <div className="col-span-4 flex flex-col justify-between">
-                        <div className="border border-slate-400 rounded p-1.5 bg-slate-50 text-center">
-                          <div className="font-bold text-[8px] text-slate-900">PAKET SOAL</div>
+                        <div className="border border-slate-400 print:border-slate-800 rounded p-1.5 bg-slate-50 print:bg-white text-center">
+                          <div className="font-bold text-[8px] print:text-[7px] text-slate-900 print:text-black">PAKET SOAL</div>
                           <div className="flex justify-around mt-1">
                             {['A', 'B', 'C', 'D'].map(pkt => (
-                              <div key={pkt} className="w-3 h-3 rounded-full border border-slate-700 text-[7px] flex items-center justify-center font-bold text-slate-900">
+                              <div key={pkt} className="w-3 h-3 rounded-full border border-slate-700 print:border-black text-[7px] flex items-center justify-center font-bold text-slate-900 print:text-black">
                                 {pkt}
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        <div className="border border-slate-400 rounded p-1.5 bg-slate-50 text-[7.5px] mt-1">
-                          <div className="font-semibold text-slate-800">TGL: ___/___/202_</div>
-                          <div className="mt-1 font-bold text-[7px] text-slate-900">TTD PESERTA:</div>
-                          <div className="h-6 border border-slate-300 bg-white rounded mt-0.5"></div>
+                        <div className="border border-slate-400 print:border-slate-800 rounded p-1.5 bg-slate-50 print:bg-white text-[7.5px] print:text-[6.5px] mt-1">
+                          <div className="font-semibold text-slate-800 print:text-black">TGL: ___/___/202_</div>
+                          <div className="mt-1 font-bold text-[7px] text-slate-900 print:text-black">TTD PESERTA:</div>
+                          <div className="h-6 border border-slate-300 print:border-slate-800 bg-white rounded mt-0.5"></div>
                         </div>
                       </div>
                     </div>
 
                     {/* Answer Grid (2 Columns: 1-13 & 14-25, etc.) */}
-                    <div className="mt-1 border border-slate-400 rounded p-1.5 bg-slate-50">
-                      <div className="text-center font-bold text-[8px] text-slate-900 pb-1 border-b border-slate-300 mb-1">
+                    <div className="mt-1 border border-slate-400 print:border-slate-800 rounded p-1.5 bg-slate-50 print:bg-white">
+                      <div className="text-center font-bold text-[8px] print:text-[7px] text-slate-900 print:text-black pb-1 border-b border-slate-300 print:border-slate-800 mb-1">
                         PILIHAN JAWABAN GANDA (1 - {totalQ})
                       </div>
 
@@ -298,11 +321,11 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                                 const options = optCount === 4 ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C', 'D', 'E'];
 
                                 return (
-                                  <div key={qNo} className="flex items-center justify-between text-[7.5px]">
-                                    <span className="font-bold w-4 text-slate-900">{qNo.toString().padStart(2, '0')}.</span>
+                                  <div key={qNo} className="flex items-center justify-between text-[7.5px] print:text-[6.5px]">
+                                    <span className="font-bold w-4 text-slate-900 print:text-black">{qNo.toString().padStart(2, '0')}.</span>
                                     <div className="flex gap-1">
                                       {options.map(opt => (
-                                        <span key={opt} className="w-2.5 h-2.5 rounded-full border border-slate-700 text-[6.5px] flex items-center justify-center font-bold text-slate-800">
+                                        <span key={opt} className="w-2.5 h-2.5 rounded-full border border-slate-700 print:border-black text-[6.5px] flex items-center justify-center font-bold text-slate-800 print:text-black">
                                           {opt}
                                         </span>
                                       ))}
@@ -317,7 +340,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                     </div>
 
                     {/* Footer */}
-                    <div className="text-[6.5px] text-slate-500 font-semibold text-center mt-1">
+                    <div className="text-[6.5px] text-slate-500 print:text-slate-800 font-semibold text-center mt-1">
                       [LJK-A4-BAGI-2 • KYOCERA M2535DN & CAM READY]
                     </div>
                   </div>
