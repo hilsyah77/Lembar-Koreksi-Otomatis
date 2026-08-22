@@ -4,12 +4,12 @@ import { TeacherProfile, ExamConfig, ScanResult, ClassAnalytics } from '@/types/
 
 /**
  * Generates and downloads Full 1-Sheet A4 LJK (Single Student per Page, Full 1 Lembar A4 Portrait)
- * Configured with 2.5 cm (25 mm) Left Margin for folder/binder hole punching & archiving.
+ * Configured with 1.5 cm (15 mm) Left Margin for neat border spacing, folder punching & scanner ADF alignment.
  */
 export function generatePrintableLjkFullA4(
   exam: ExamConfig,
   teacher: TeacherProfile,
-  marginLeftMm: number = 25 // Default 2.5 cm left margin
+  marginLeftMm: number = 15 // Default 1.5 cm left margin
 ): void {
   // A4 Portrait: 210mm x 297mm
   const doc = new jsPDF({
@@ -20,11 +20,11 @@ export function generatePrintableLjkFullA4(
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const marginLeft = marginLeftMm; // 25 mm = 2.5 cm
+  const marginLeft = marginLeftMm; // 15 mm = 1.5 cm
   const marginRight = 8;
   const marginTop = 7;
   const marginBottom = 7;
-  const sheetW = pageWidth - marginLeft - marginRight; // 177mm
+  const sheetW = pageWidth - marginLeft - marginRight; // 187mm (at 15mm margin)
   const sheetH = pageHeight - marginTop - marginBottom; // 283mm
 
   // 1. Fiducial Corner Markers (5mm x 5mm black squares for scanner alignment)
@@ -224,15 +224,16 @@ export function generatePrintableLjkFullA4(
   const footerY = marginTop + sheetH - 3.5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
+  const marginLabel = (marginLeftMm / 10).toFixed(1);
   doc.text(
-    `[LJK STANDAR A4 1 LEMBAR • ID: ${exam.id} • MARGIN KIRI: 2.5 CM] Terkalibrasi ADF Kyocera ECOSYS M2535dn`,
+    `[LJK STANDAR A4 1 LEMBAR • ID: ${exam.id} • MARGIN KIRI: ${marginLabel} CM] Terkalibrasi ADF Kyocera ECOSYS M2535dn`,
     marginLeft + 4,
     footerY
   );
   doc.setFont('helvetica', 'bold');
   doc.text('KEMENTERIAN AGAMA / DINAS PENDIDIKAN', marginLeft + sheetW - 4, footerY, { align: 'right' });
 
-  doc.save(`LJK-Standar-A4-Margin2.5cm-${exam.subject.replace(/\s+/g, '-')}.pdf`);
+  doc.save(`LJK-Standar-A4-Margin${marginLabel}cm-${exam.subject.replace(/\s+/g, '-')}.pdf`);
 }
 
 /**
@@ -242,7 +243,7 @@ export function generatePrintableLjkA4DividedBy2(
   exam: ExamConfig,
   teacher: TeacherProfile,
   orientation: 'portrait' | 'landscape' = 'portrait',
-  marginLeftMm: number = 25 // Default 2.5 cm left margin
+  marginLeftMm: number = 15 // Default 1.5 cm left margin
 ): void {
   const isPortrait = orientation === 'portrait';
 

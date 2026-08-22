@@ -32,7 +32,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
   const [layoutMode, setLayoutMode] = useState<'full_a4' | 'divided_a4'>('full_a4');
   const [totalQ, setTotalQ] = useState<number>(exam.totalQuestions || 25);
   const [optCount, setOptCount] = useState<4 | 5>(exam.optionsCount || 5);
-  const [leftMarginCm, setLeftMarginCm] = useState<number>(2.5); // Default 2.5 cm margin
+  const [leftMarginCm, setLeftMarginCm] = useState<number>(1.5); // Default 1.5 cm margin
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const handleApplyToCurrentExam = () => {
@@ -74,7 +74,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 print:max-w-none print:w-full print:p-0 print:m-0 print:space-y-0">
-      {/* Embedded Print Stylesheet strictly configured for 2.5cm Left Margin */}
+      {/* Embedded Print Stylesheet strictly configured for Left Margin */}
       <style>{`
         @media print {
           @page {
@@ -133,11 +133,11 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                 Generator Lembar Jawaban Komputer (LJK)
               </h2>
               <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Margin Kiri {leftMarginCm} cm (25 mm)
+                Margin Kiri {leftMarginCm} cm ({leftMarginCm * 10} mm)
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              Format 1 lembar A4 penuh dengan margin kiri 2.5 cm (25 mm) siap untuk lubang perforator/binder arsip guru & scanner ADF Kyocera.
+              Format 1 lembar A4 penuh dengan margin kiri {leftMarginCm} cm ({leftMarginCm * 10} mm) pas untuk lubang perforator/binder & scanner ADF Kyocera.
             </p>
           </div>
         </div>
@@ -176,17 +176,17 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Margin Kiri Hasil Cetak
+                  Batas Margin Kiri
                 </label>
                 <span className="text-xs font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">
                   {leftMarginCm} cm ({leftMarginCm * 10} mm)
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Ruang tepi kiri 2.5 cm memberikan jarak aman saat kertas LJK dijilid, distaples, atau dilubangi binder (*perforator*).
+                Ruang tepi kiri {leftMarginCm} cm memberikan jarak aman saat kertas LJK dijilid, distaples, atau dilubangi binder (*perforator*).
               </p>
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
-                {[2.0, 2.5, 3.0].map(mVal => (
+              <div className="grid grid-cols-4 gap-1.5 pt-1">
+                {[1.0, 1.5, 2.0, 2.5].map(mVal => (
                   <button
                     key={mVal}
                     type="button"
@@ -197,7 +197,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    {mVal} cm {mVal === 2.5 && '★'}
+                    {mVal} cm {mVal === 1.5 && '★'}
                   </button>
                 ))}
               </div>
@@ -559,7 +559,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
                   {/* 5. Footer Calibration & Metadata Bar */}
                   <div className="flex items-center justify-between text-[8px] sm:text-[9px] text-slate-600 print:text-black font-medium px-2 pt-0.5 border-t border-slate-300 print:border-black">
-                    <span>[LJK-A4-MARGIN 2.5CM • ID: ${exam.id}] Terkalibrasi Kyocera M2535dn</span>
+                    <span>[LJK-A4-MARGIN {leftMarginCm}CM • ID: {exam.id}] Terkalibrasi Kyocera M2535dn</span>
                     <span className="font-bold">KEMENAG / DINAS PENDIDIKAN</span>
                   </div>
                 </div>

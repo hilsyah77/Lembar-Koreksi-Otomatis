@@ -222,6 +222,7 @@ export default function Home() {
             results={results}
             exam={activeExam}
             teacher={teacher}
+            students={students}
             onUpdateResult={handleUpdateResult}
             onDeleteResult={handleDeleteResult}
             onOpenScanTab={() => setActiveTab('CAMERA')}
