@@ -197,7 +197,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               Efisiensi Penggandaan Kertas Fotokopi
             </div>
             <p className="text-emerald-800/90 leading-relaxed font-medium">
-              Dengan model A4 dibagi 2, untuk 36 siswa Anda hanya perlu mencetak <strong>18 lembar kertas A4</strong>. Setelah dicetak, potong tepat pada garis putus-putus tengah.
+              Dengan model A4 dibagi 2, untuk 36 siswa Anda hanya perlu mencetak <strong>18 lembar kertas A4</strong>. Setelah dicetak, potong tepat di bagian tengah menjadi 2 lembar format A5.
             </p>
           </div>
         </div>
@@ -216,13 +216,6 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             {/* A4 Landscape Virtual Sheet (White Paper Container) */}
             <div className="bg-slate-100 rounded-xl p-4 sm:p-6 border border-slate-200 overflow-x-auto select-none print:m-0 print:p-0 print:border-none">
               <div className="min-w-[680px] grid grid-cols-2 gap-4 relative bg-white p-4 rounded-lg shadow-md border border-slate-300">
-                {/* Center Cut Line Marker */}
-                <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 border-r-2 border-dashed border-slate-400 flex flex-col items-center justify-center pointer-events-none z-10">
-                  <span className="bg-white px-1 py-1 text-[9px] font-mono font-bold text-slate-600 rotate-90 flex items-center gap-1 shadow-xs border border-slate-200 rounded">
-                    ✂ GARIS POTONG A4 DIBAGI 2 ✂
-                  </span>
-                </div>
-
                 {/* Left & Right A5 Sheets */}
                 {[1, 2].map(sheetIdx => (
                   <div key={sheetIdx} className="border border-slate-300 rounded-lg p-3 bg-white flex flex-col justify-between relative text-[10px]">
