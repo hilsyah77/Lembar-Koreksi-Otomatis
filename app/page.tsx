@@ -15,6 +15,7 @@ import { TeacherProfileModal } from '@/components/TeacherProfileModal';
 import { ExamConfigModal } from '@/components/ExamConfigModal';
 import { StudentListModal } from '@/components/StudentListModal';
 import { CloudSyncModal } from '@/components/CloudSyncModal';
+import { DatabaseManagerModal } from '@/components/DatabaseManagerModal';
 
 import { 
   ExamConfig, 
@@ -70,6 +71,7 @@ export default function Home() {
   const [isExamModalOpen, setIsExamModalOpen] = useState<boolean>(false);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState<boolean>(false);
   const [isCloudModalOpen, setIsCloudModalOpen] = useState<boolean>(false);
+  const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState<boolean>(false);
 
   const activeExam = exams.find(e => e.id === activeExamId) || exams[0] || INITIAL_EXAM;
 
@@ -146,6 +148,21 @@ export default function Home() {
     }
   };
 
+  // State Purged / Database reset handler
+  const handleStatePurged = (newState: AppState) => {
+    setExams(newState.exams);
+    setActiveExamId(newState.activeExamId);
+    setStudents(newState.students);
+    setResults(newState.results);
+    setTeacher(newState.teacher);
+    setKyocera(newState.kyocera);
+  };
+
+  // Results only purged handler
+  const handleResultsPurged = () => {
+    setResults([]);
+  };
+
   const currentAppState: AppState = {
     teacher,
     kyocera,
@@ -170,6 +187,8 @@ export default function Home() {
         onOpenTeacherModal={() => setIsTeacherModalOpen(true)}
         onOpenExamModal={() => setIsExamModalOpen(true)}
         onOpenCloudModal={() => setIsCloudModalOpen(true)}
+        onOpenStudentModal={() => setIsStudentModalOpen(true)}
+        onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
         totalResultsCount={results.length}
       />
 
@@ -266,6 +285,7 @@ export default function Home() {
       />
 
       <StudentListModal
+        key={`student-modal-${isStudentModalOpen ? 'open' : 'closed'}-${students.length}`}
         isOpen={isStudentModalOpen}
         onClose={() => setIsStudentModalOpen(false)}
         students={students}
@@ -280,6 +300,15 @@ export default function Home() {
         onClose={() => setIsCloudModalOpen(false)}
         currentState={currentAppState}
         onRestoreState={handleRestoreState}
+        onOpenDatabaseManager={() => setIsDatabaseModalOpen(true)}
+      />
+
+      <DatabaseManagerModal
+        isOpen={isDatabaseModalOpen}
+        onClose={() => setIsDatabaseModalOpen(false)}
+        currentState={currentAppState}
+        onStatePurged={handleStatePurged}
+        onResultsPurged={handleResultsPurged}
       />
     </div>
   );

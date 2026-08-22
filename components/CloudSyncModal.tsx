@@ -12,7 +12,8 @@ import {
   Monitor, 
   RefreshCw, 
   ShieldCheck,
-  HardDrive
+  HardDrive,
+  Trash2
 } from 'lucide-react';
 import { AppState, exportBackupData, importBackupData } from '@/lib/storage';
 
@@ -21,13 +22,15 @@ interface CloudSyncModalProps {
   onClose: () => void;
   currentState: AppState;
   onRestoreState: (restored: AppState) => void;
+  onOpenDatabaseManager?: () => void;
 }
 
 export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   isOpen,
   onClose,
   currentState,
-  onRestoreState
+  onRestoreState,
+  onOpenDatabaseManager
 }) => {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncSuccessMsg, setSyncSuccessMsg] = useState<string | null>(null);
@@ -191,6 +194,31 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
               </label>
             </div>
           </div>
+
+          {/* Database Purge / Reset Trigger */}
+          {onOpenDatabaseManager && (
+            <div className="border-t border-slate-100 pt-4">
+              <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-xs text-rose-900">
+                  <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
+                  <div>
+                    <div className="font-bold">Hapus / Bersihkan Database</div>
+                    <div className="text-[10.5px] text-rose-700 font-medium">Kosongkan hasil ujian atau reset sistem ke kondisi awal</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenDatabaseManager();
+                  }}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-colors shadow-xs shrink-0"
+                >
+                  Buka Menu Hapus
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -1,4 +1,4 @@
-import { TeacherProfile, ExamConfig, Student, ScanResult, KyoceraSettings } from '@/types/omr';
+import { TeacherProfile, ExamConfig, Student, ScanResult, KyoceraSettings, OptionLetter } from '@/types/omr';
 import { DEFAULT_TEACHER_PROFILE, DEFAULT_KYOCERA_CONFIG, SAMPLE_EXAMS, SAMPLE_STUDENTS, generateInitialResults } from './mock-data';
 
 const STORAGE_KEYS = {
@@ -195,3 +195,90 @@ export function importBackupData(file: File): Promise<AppState> {
     reader.readAsText(file);
   });
 }
+
+/**
+ * Hapus Semua Data Database & Kembalikan ke State Kosong Murni
+ */
+export function purgeEntireDatabase(): AppState {
+  if (typeof window !== 'undefined') {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  }
+
+  const defaultKeys: Record<number, OptionLetter> = {};
+  const defaultWeights: Record<number, number> = {};
+  for (let i = 1; i <= 25; i++) {
+    defaultKeys[i] = 'A';
+    defaultWeights[i] = 1;
+  }
+
+  const cleanExam: ExamConfig = {
+    id: `exam-${Date.now()}`,
+    title: 'Ujian Baru (Belum Diberi Judul)',
+    subject: 'Mata Pelajaran',
+    gradeClass: 'Kelas XII',
+    date: new Date().toISOString().slice(0, 10),
+    totalQuestions: 25,
+    optionsCount: 4,
+    packets: [
+      {
+        packetCode: 'A',
+        keys: defaultKeys
+      }
+    ],
+    questionWeights: defaultWeights,
+    penaltyNegativeScore: 0,
+    kkm: 75,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const emptyState: AppState = {
+    teacher: DEFAULT_TEACHER_PROFILE,
+    kyocera: DEFAULT_KYOCERA_CONFIG,
+    exams: [cleanExam],
+    students: [],
+    results: [],
+    activeExamId: cleanExam.id,
+    lastSyncedAt: new Date().toISOString()
+  };
+
+  saveStateToStorage(emptyState);
+  return emptyState;
+}
+
+/**
+ * Reset Database ke Contoh Data Standar (Default Demo Factory)
+ */
+export function resetDatabaseToFactoryDemo(): AppState {
+  if (typeof window !== 'undefined') {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  }
+
+  const defaultState: AppState = {
+    teacher: DEFAULT_TEACHER_PROFILE,
+    kyocera: DEFAULT_KYOCERA_CONFIG,
+    exams: SAMPLE_EXAMS,
+    students: SAMPLE_STUDENTS,
+    results: generateInitialResults(SAMPLE_EXAMS[0], SAMPLE_STUDENTS),
+    activeExamId: SAMPLE_EXAMS[0].id,
+    lastSyncedAt: new Date().toISOString()
+  };
+
+  saveStateToStorage(defaultState);
+  return defaultState;
+}
+
+/**
+ * Hapus Hanya Hasil Koreksi Nilai Scan
+ */
+export function purgeResultsOnly(): ScanResult[] {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEYS.RESULTS);
+  }
+  return [];
+}
+

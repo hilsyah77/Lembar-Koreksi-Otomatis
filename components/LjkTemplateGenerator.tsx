@@ -72,6 +72,32 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          /* Hide EVERYTHING across the web app during print */
+          body * {
+            visibility: hidden !important;
+          }
+          /* Exclusively show the LJK worksheet container */
+          #printable-ljk-sheet,
+          #printable-ljk-sheet * {
+            visibility: visible !important;
+          }
+          #printable-ljk-sheet {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6mm !important;
+            background: #ffffff !important;
+            box-sizing: border-box !important;
+            z-index: 9999999 !important;
+          }
         }
       `}</style>
 
@@ -235,7 +261,10 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
             {/* A4 Landscape Virtual Sheet (White Paper Container) */}
             <div className="bg-slate-100 rounded-xl p-4 sm:p-6 border border-slate-200 overflow-x-auto select-none print:m-0 print:p-0 print:border-none print:bg-white print:overflow-visible print:rounded-none">
-              <div className="min-w-[680px] print:min-w-0 print:w-full grid grid-cols-2 gap-4 print:gap-4 relative bg-white p-4 print:p-0 rounded-lg print:rounded-none shadow-md print:shadow-none border border-slate-300 print:border-none">
+              <div 
+                id="printable-ljk-sheet" 
+                className="min-w-[680px] print:min-w-0 print:w-full grid grid-cols-2 gap-4 print:gap-4 relative bg-white p-4 print:p-0 rounded-lg print:rounded-none shadow-md print:shadow-none border border-slate-300 print:border-none"
+              >
                 {/* Left & Right A5 Sheets */}
                 {[1, 2].map(sheetIdx => (
                   <div 

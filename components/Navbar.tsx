@@ -13,7 +13,9 @@ import {
   Settings, 
   Layers, 
   CheckCircle2, 
-  Wifi
+  Wifi,
+  Users,
+  Trash2
 } from 'lucide-react';
 import { ExamConfig, TeacherProfile, KyoceraSettings } from '@/types/omr';
 
@@ -30,6 +32,8 @@ interface NavbarProps {
   onOpenTeacherModal: () => void;
   onOpenExamModal: () => void;
   onOpenCloudModal: () => void;
+  onOpenStudentModal: () => void;
+  onOpenDatabaseModal: () => void;
   totalResultsCount: number;
 }
 
@@ -44,6 +48,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenTeacherModal,
   onOpenExamModal,
   onOpenCloudModal,
+  onOpenStudentModal,
+  onOpenDatabaseModal,
   totalResultsCount
 }) => {
   const activeExam = exams.find(e => e.id === activeExamId) || exams[0];
@@ -120,6 +126,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden sm:inline">Cloud</span>
           </button>
 
+          {/* Student & Class Settings Button */}
+          <button
+            onClick={onOpenStudentModal}
+            title="Pengaturan Data Kelas, Nama Siswa & NISN"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 text-xs font-bold transition-all shadow-xs"
+          >
+            <Users className="w-3.5 h-3.5 text-purple-600" />
+            <span className="hidden sm:inline">Data Siswa & NISN</span>
+          </button>
+
           {/* Teacher Profile Button */}
           <button
             onClick={onOpenTeacherModal}
@@ -128,6 +144,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <UserCheck className="w-3.5 h-3.5 text-blue-600" />
             <span className="hidden sm:inline">Guru Pengampu</span>
+          </button>
+
+          {/* Database / Purge Button */}
+          <button
+            onClick={onOpenDatabaseModal}
+            title="Hapus / Reset Database Aplikasi"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 hover:text-rose-900 text-xs font-bold transition-all shadow-xs"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+            <span className="hidden md:inline">Hapus Database</span>
           </button>
         </div>
       </div>
