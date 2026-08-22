@@ -18,11 +18,16 @@ import {
   FileSpreadsheet,
   SplitSquareVertical,
   UploadCloud,
-  CheckCheck
+  CheckCheck,
+  Radio,
+  Search,
+  Zap,
+  Activity
 } from 'lucide-react';
 import { ExamConfig, Student, ScanResult, KyoceraSettings } from '@/types/omr';
 import { processLjkCanvas, evaluateScanResult, splitA4ScannedImage } from '@/lib/omr-engine';
 import { playSuccessChime } from '@/lib/audio';
+import { ScannerDiscoveryModal } from './ScannerDiscoveryModal';
 import confetti from 'canvas-confetti';
 
 interface KyoceraScannerHubProps {
@@ -48,6 +53,7 @@ export const KyoceraScannerHub: React.FC<KyoceraScannerHubProps> = ({
   const [processedSheetsCount, setProcessedSheetsCount] = useState<number>(0);
   const [isSetupGuideOpen, setIsSetupGuideOpen] = useState<boolean>(false);
   const [isConfigDrawerOpen, setIsConfigDrawerOpen] = useState<boolean>(false);
+  const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState<boolean>(false);
   const [batchResults, setBatchResults] = useState<ScanResult[]>([]);
   const [currentFeedingSheetName, setCurrentFeedingSheetName] = useState<string>('');
 
@@ -183,7 +189,19 @@ export const KyoceraScannerHub: React.FC<KyoceraScannerHubProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setIsDiscoveryModalOpen(true)}
+              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-200 active:scale-98 transition-all"
+              title="Cari dan Deteksi Otomatis IP Mesin Scanner Kyocera di Jaringan Lokal"
+            >
+              <Radio className="w-4 h-4 animate-pulse" />
+              <span>Cari / Deteksi IP Scanner</span>
+              <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+                Auto
+              </span>
+            </button>
+
             <button
               onClick={() => setIsSetupGuideOpen(true)}
               className="px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2 border border-slate-200 transition-colors shadow-xs"
@@ -206,14 +224,34 @@ export const KyoceraScannerHub: React.FC<KyoceraScannerHubProps> = ({
         {isConfigDrawerOpen && (
           <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
             <div>
-              <label className="block text-slate-600 font-semibold mb-1.5">IP Address Scanner Kyocera</label>
-              <input
-                type="text"
-                value={kyocera.ipAddress}
-                onChange={(e) => onUpdateKyoceraConfig({ ...kyocera, ipAddress: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono focus:bg-white focus:border-blue-500 focus:outline-none shadow-xs"
-                placeholder="192.168.1.185"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-slate-600 font-semibold">IP Address Scanner</label>
+                <button
+                  type="button"
+                  onClick={() => setIsDiscoveryModalOpen(true)}
+                  className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
+                >
+                  <Search className="w-3 h-3" />
+                  Cari IP
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={kyocera.ipAddress}
+                  onChange={(e) => onUpdateKyoceraConfig({ ...kyocera, ipAddress: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold focus:bg-white focus:border-blue-500 focus:outline-none shadow-xs"
+                  placeholder="192.168.1.185"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsDiscoveryModalOpen(true)}
+                  title="Deteksi Otomatis di Jaringan"
+                  className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition-colors shrink-0"
+                >
+                  <Radio className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-slate-600 font-semibold mb-1.5">Port Service / Push</label>
@@ -484,6 +522,20 @@ export const KyoceraScannerHub: React.FC<KyoceraScannerHubProps> = ({
           </div>
         </div>
       )}
+
+      {/* Scanner IP Auto-Discovery Modal */}
+      <ScannerDiscoveryModal
+        isOpen={isDiscoveryModalOpen}
+        onClose={() => setIsDiscoveryModalOpen(false)}
+        currentKyocera={kyocera}
+        onSelectScannerIp={(selectedIp, modelName) => {
+          onUpdateKyoceraConfig({
+            ...kyocera,
+            ipAddress: selectedIp,
+            printerModel: modelName || kyocera.printerModel
+          });
+        }}
+      />
     </div>
   );
 };
