@@ -42,7 +42,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
   // Add Form State
   const [newNo, setNewNo] = useState<string>('');
   const [newName, setNewName] = useState<string>('');
-  const [newClass, setNewClass] = useState<string>('XII MIPA 1');
+  const [newClass, setNewClass] = useState<string>('IX E');
   const [isCustomClass, setIsCustomClass] = useState<boolean>(false);
   const [customClassInput, setCustomClassInput] = useState<string>('');
 
@@ -54,13 +54,13 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
 
   // Bulk Import State
   const [bulkText, setBulkText] = useState<string>('');
-  const [bulkDefaultClass, setBulkDefaultClass] = useState<string>('XII MIPA 1');
+  const [bulkDefaultClass, setBulkDefaultClass] = useState<string>('IX E');
   const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
 
   // Unique existing classes
   const uniqueClasses = useMemo(() => {
     const classes = Array.from(new Set(list.map(s => s.classId).filter(Boolean)));
-    return classes.length > 0 ? classes : ['XII MIPA 1', 'XII MIPA 2', 'XII IPS 1'];
+    return classes.length > 0 ? classes : ['IX E', 'IX F', 'IX G', 'IX H', 'IX I'];
   }, [list]);
 
   // Duplicate NISN check
@@ -92,7 +92,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
     e.preventDefault();
     if (!newNo.trim() || !newName.trim()) return;
 
-    const classToAssign = isCustomClass ? (customClassInput.trim() || 'XII MIPA 1') : newClass;
+    const classToAssign = isCustomClass ? (customClassInput.trim() || 'IX E') : newClass;
     const cleanNo = newNo.replace(/\D/g, ''); // keep numbers only
     const formattedNo = cleanNo.length > 0 ? cleanNo.padStart(9, '0').slice(-9) : newNo.trim();
 
@@ -614,7 +614,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                 rows={8}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
-                placeholder={`Contoh format:\n0081234501\tAhmad Fajar\tXII MIPA 1\n0081234502\tBudi Santoso\tXII MIPA 1\n0081234503\tCitra Lestari\tXII MIPA 2\n0081234504\tDewi Anggraini\tXII IPS 1`}
+                placeholder={`Contoh format:\n0081234501\tAhmad Fajar\tIX E\n0081234502\tBudi Santoso\tIX F\n0081234503\tCitra Lestari\tIX G\n0081234504\tDewi Anggraini\tIX H`}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-500 shadow-inner"
               />
             </div>
@@ -624,11 +624,11 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                 type="button"
                 onClick={() => {
                   setBulkText(
-                    `0081234511\tAditia Pratama\tXII MIPA 1\n` +
-                    `0081234512\tAnisa Rahmawati\tXII MIPA 1\n` +
-                    `0081234513\tBagus Tri Nugroho\tXII MIPA 2\n` +
-                    `0081234514\tCantika Putri\tXII MIPA 2\n` +
-                    `0081234515\tDimas Wahyu\tXII IPS 1`
+                    `0081234511\tAditia Pratama\tIX E\n` +
+                    `0081234512\tAnisa Rahmawati\tIX F\n` +
+                    `0081234513\tBagus Tri Nugroho\tIX G\n` +
+                    `0081234514\tCantika Putri\tIX H\n` +
+                    `0081234515\tDimas Wahyu\tIX I`
                   );
                 }}
                 className="text-xs text-purple-700 hover:text-purple-900 font-bold underline cursor-pointer"

@@ -70,75 +70,75 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
     : (totalQ <= 25 ? 2 : totalQ <= 40 ? 3 : 4);
   const qPerCol = Math.ceil(totalQ / numCols);
 
-  // Helper component to render an individual A5 LJK half
+  // Helper component to render an individual A5 LJK half (140mm x 200mm)
   const renderSingleLjkHalf = (studentNo: number) => (
-    <div className="flex-1 bg-white p-3.5 sm:p-4 print:p-2.5 rounded-lg border-2 border-slate-900 print:border-black text-slate-900 print:text-black flex flex-col justify-between relative">
-      {/* 4 Black Corner Fiducial Markers */}
-      <div className="absolute top-1.5 left-1.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-black" />
-      <div className="absolute top-1.5 right-1.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-black" />
-      <div className="absolute bottom-1.5 left-1.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-black" />
-      <div className="absolute bottom-1.5 right-1.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-black" />
+    <div className="print-ljk-half flex-1 bg-white p-3.5 sm:p-4 print:p-2 rounded-lg border-2 border-slate-900 print:border-black text-slate-900 print:text-black flex flex-col justify-between relative box-border overflow-hidden">
+      {/* 4 Black Corner Fiducial Markers for Scanner Alignment */}
+      <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 bg-black" />
+      <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-black" />
+      <div className="absolute bottom-1.5 left-1.5 w-3.5 h-3.5 bg-black" />
+      <div className="absolute bottom-1.5 right-1.5 w-3.5 h-3.5 bg-black" />
 
       {/* 1. Official Header */}
       <div className="text-center px-2 pt-0.5">
         <div className="font-black text-xs uppercase tracking-tight text-slate-900 print:text-black leading-tight line-clamp-1">
           {teacher.namaSekolah}
         </div>
-        <div className="font-extrabold text-[11px] tracking-wider text-slate-900 print:text-black mt-0.5">
+        <div className="font-extrabold text-[10.5px] tracking-wider text-slate-900 print:text-black mt-0.5">
           LEMBAR JAWABAN KOMPUTER (LJK)
         </div>
-        <div className="text-[9px] text-slate-700 print:text-black font-semibold mt-0.5">
+        <div className="text-[8.5px] text-slate-700 print:text-black font-semibold mt-0.5">
           Mapel: <span className="font-bold text-black">{exam.subject}</span> | Kelas: <span className="font-bold text-black">{exam.gradeClass}</span> | Th. Ajaran: <span className="font-bold text-black">{teacher.tahunAjaran}</span>
         </div>
-        <div className="border-b-2 border-black mt-1.5 mb-0.5"></div>
-        <div className="border-b border-black mb-1.5"></div>
+        <div className="border-b-2 border-black mt-1 mb-0.5"></div>
+        <div className="border-b border-black mb-1"></div>
       </div>
 
       {/* 2. Petunjuk Pengisian Singkat */}
-      <div className="bg-slate-50 border border-slate-400 print:border-black rounded-sm p-1.5 text-[8.5px] flex items-center justify-between gap-1.5 w-full">
+      <div className="bg-slate-50 border border-slate-400 print:border-black rounded-xs p-1 text-[8px] flex items-center justify-between gap-1 w-full">
         <div className="space-y-0.5">
           <span className="font-bold text-slate-900 print:text-black">PETUNJUK:</span>
-          <p className="text-slate-700 print:text-black leading-tight">
+          <p className="text-slate-700 print:text-black leading-none text-[7.5px]">
             1. Hitamkan bulatan [●] dgn Pensil 2B / Pulpen. 2. Jgn lipat/robek. 3. Hapus bersih jika keliru.
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0 border-l border-slate-300 print:border-black pl-1.5">
+        <div className="flex items-center gap-1 shrink-0 border-l border-slate-300 print:border-black pl-1">
           <div className="text-center">
             <span className="w-3 h-3 rounded-full bg-black text-white text-[7px] flex items-center justify-center font-bold mx-auto">●</span>
-            <span className="text-[6.5px] font-bold text-emerald-700">BENAR</span>
+            <span className="text-[6px] font-bold text-emerald-700 print:text-black">BENAR</span>
           </div>
           <div className="text-center">
             <span className="w-3 h-3 rounded-full border border-black text-black text-[7px] flex items-center justify-center font-bold mx-auto">✕</span>
-            <span className="text-[6.5px] font-bold text-rose-700">SALAH</span>
+            <span className="text-[6px] font-bold text-rose-700 print:text-black">SALAH</span>
           </div>
         </div>
       </div>
 
       {/* 3. Identitas Siswa & NISN Matrix Box */}
-      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white w-full my-1.5 space-y-1.5">
+      <div className="border border-slate-700 print:border-black rounded-xs p-1.5 bg-white w-full my-1 space-y-1">
         {/* Nama Peserta */}
-        <div className="flex items-center gap-1.5">
-          <span className="font-bold text-[9px] text-slate-900 print:text-black shrink-0">NAMA PESERTA :</span>
-          <div className="flex-1 h-5 border border-slate-500 print:border-black bg-slate-50/30 print:bg-white rounded-xs px-2 flex items-center text-[9px] font-mono text-slate-400">
+        <div className="flex items-center gap-1">
+          <span className="font-bold text-[8.5px] text-slate-900 print:text-black shrink-0">NAMA PESERTA :</span>
+          <div className="flex-1 h-4.5 border border-slate-500 print:border-black bg-slate-50/30 print:bg-white rounded-xs px-1.5 flex items-center text-[8px] font-mono text-slate-400">
             (Tuliskan nama lengkap peserta)
           </div>
         </div>
 
         {/* Split: 10 Digit NISN Grid (Left) & Paket / Ruang / TTD (Right) */}
-        <div className="grid grid-cols-12 gap-2 items-start">
+        <div className="grid grid-cols-12 gap-1.5 items-start">
           {/* Left: 10 Digit NISN Grid */}
-          <div className="col-span-7 border border-slate-400 print:border-black rounded-sm p-1.5 bg-slate-50/50 print:bg-white">
-            <div className="font-bold text-[8.5px] text-slate-900 print:text-black mb-1 flex items-center justify-between">
+          <div className="col-span-7 border border-slate-400 print:border-black rounded-xs p-1 bg-slate-50/50 print:bg-white">
+            <div className="font-bold text-[7.5px] text-slate-900 print:text-black mb-0.5 flex items-center justify-between">
               <span>NOMOR PESERTA / NISN (10 DIGIT)</span>
             </div>
             <div className="grid grid-cols-10 gap-0.5 text-center">
               {Array.from({ length: 10 }).map((_, cIdx) => (
                 <div key={cIdx} className="flex flex-col items-center">
-                  <div className="w-3.5 h-4 border border-slate-500 print:border-black bg-white rounded-xs mb-0.5"></div>
+                  <div className="w-3.5 h-3.5 border border-slate-500 print:border-black bg-white rounded-xs mb-0.5"></div>
                   {Array.from({ length: 10 }).map((_, rIdx) => (
                     <span 
                       key={rIdx} 
-                      className="w-3 h-3 rounded-full border border-slate-700 print:border-black text-[7px] flex items-center justify-center my-[0.5px] font-bold text-slate-900 print:text-black"
+                      className="w-3 h-3 rounded-full border border-slate-700 print:border-black text-[6.5px] flex items-center justify-center my-[0.5px] font-bold text-slate-900 print:text-black leading-none"
                     >
                       {rIdx}
                     </span>
@@ -151,11 +151,11 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           {/* Right: Paket Soal, Ruang, Tgl & Tanda Tangan */}
           <div className="col-span-5 space-y-1">
             {/* Paket Soal */}
-            <div className="border border-slate-400 print:border-black rounded-sm p-1 bg-white text-center">
-              <span className="font-bold text-[8.5px] text-slate-900 print:text-black block mb-0.5">PAKET SOAL</span>
+            <div className="border border-slate-400 print:border-black rounded-xs p-1 bg-white text-center">
+              <span className="font-bold text-[7.5px] text-slate-900 print:text-black block mb-0.5">PAKET SOAL</span>
               <div className="flex justify-around">
                 {['A', 'B', 'C', 'D'].map(pkt => (
-                  <div key={pkt} className="w-4 h-4 rounded-full border border-slate-800 print:border-black text-[8px] flex items-center justify-center font-bold text-slate-900 print:text-black">
+                  <div key={pkt} className="w-3.5 h-3.5 rounded-full border border-slate-800 print:border-black text-[7.5px] flex items-center justify-center font-bold text-slate-900 print:text-black">
                     {pkt}
                   </div>
                 ))}
@@ -163,20 +163,20 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             </div>
 
             {/* Ruang & Tanggal */}
-            <div className="border border-slate-400 print:border-black rounded-sm p-1 bg-white text-[8px] space-y-0.5">
+            <div className="border border-slate-400 print:border-black rounded-xs p-1 bg-white text-[7.5px] space-y-0.5">
               <div className="flex justify-between">
-                <span className="font-bold text-slate-800">RUANG:</span>
-                <span className="font-semibold text-slate-900">{exam.gradeClass}</span>
+                <span className="font-bold text-slate-800 print:text-black">RUANG:</span>
+                <span className="font-semibold text-slate-900 print:text-black">{exam.gradeClass}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-bold text-slate-800">TGL:</span>
-                <span className="font-semibold text-slate-900">{exam.date || '___/___/202_'}</span>
+                <span className="font-bold text-slate-800 print:text-black">TGL:</span>
+                <span className="font-semibold text-slate-900 print:text-black">{exam.date || '___/___/202_'}</span>
               </div>
             </div>
 
             {/* Tanda Tangan */}
-            <div className="border border-slate-400 print:border-black rounded-sm p-1 bg-white h-12 flex flex-col justify-between">
-              <span className="font-bold text-[8px] text-slate-900 print:text-black">TTD PESERTA:</span>
+            <div className="border border-slate-400 print:border-black rounded-xs p-1 bg-white h-10 flex flex-col justify-between">
+              <span className="font-bold text-[7.5px] text-slate-900 print:text-black">TTD PESERTA:</span>
               <div className="border-b border-dotted border-slate-400 print:border-black mb-0.5"></div>
             </div>
           </div>
@@ -184,24 +184,24 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 4. Multiple Choice Answer Grid (1 - N) */}
-      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white w-full my-1 flex-1 flex flex-col justify-between">
-        <div className="text-center font-bold text-[9px] text-slate-900 print:text-black pb-1 border-b border-slate-300 print:border-black mb-1.5 bg-slate-100 print:bg-transparent py-0.5 rounded-xs">
+      <div className="border border-slate-700 print:border-black rounded-xs p-1.5 bg-white w-full my-0.5 flex-1 flex flex-col justify-between">
+        <div className="text-center font-bold text-[8.5px] text-slate-900 print:text-black pb-0.5 border-b border-slate-300 print:border-black mb-1 bg-slate-100 print:bg-transparent py-0.5 rounded-xs">
           LEMBAR JAWABAN PILIHAN GANDA (NOMOR 1 s.d {totalQ})
         </div>
 
-        <div className={`grid gap-2 flex-1 ${numCols === 2 ? 'grid-cols-2' : numCols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+        <div className={`grid gap-1.5 flex-1 ${numCols === 2 ? 'grid-cols-2' : numCols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {Array.from({ length: numCols }).map((_, colIdx) => {
             const startQ = colIdx * qPerCol + 1;
             const endQ = Math.min((colIdx + 1) * qPerCol, totalQ);
             const count = endQ >= startQ ? endQ - startQ + 1 : 0;
 
             return (
-              <div key={colIdx} className="space-y-1 border-r border-slate-200 last:border-none pr-1.5">
+              <div key={colIdx} className="space-y-0.5 border-r border-slate-200 print:border-slate-300 last:border-none pr-1">
                 {Array.from({ length: count }).map((_, qOffset) => {
                   const qNo = startQ + qOffset;
 
                   return (
-                    <div key={qNo} className="flex items-center justify-start gap-1.5 text-[9px]">
+                    <div key={qNo} className="flex items-center justify-start gap-1 text-[8.5px]">
                       <span className="font-bold w-4 shrink-0 text-slate-900 print:text-black font-mono text-left">
                         {qNo.toString().padStart(2, '0')}.
                       </span>
@@ -209,7 +209,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                         {options.map(opt => (
                           <span 
                             key={opt} 
-                            className="w-3.5 h-3.5 rounded-full border border-slate-700 print:border-black text-[7.5px] flex items-center justify-center font-bold text-slate-900 print:text-black"
+                            className="w-3.5 h-3.5 rounded-full border border-slate-700 print:border-black text-[7px] flex items-center justify-center font-bold text-slate-900 print:text-black"
                           >
                             {opt}
                           </span>
@@ -225,8 +225,8 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 5. Footer Calibration & Metadata */}
-      <div className="flex items-center justify-between text-[7.5px] text-slate-600 print:text-black font-medium px-1 pt-1 border-t border-slate-300 print:border-black w-full">
-        <span>[LJK-A4-LANDSCAPE • SISWA {studentNo} • ID: {exam.id}] Kyocera M2535dn</span>
+      <div className="flex items-center justify-between text-[7px] text-slate-600 print:text-black font-medium px-1 pt-0.5 border-t border-slate-300 print:border-black w-full">
+        <span>[LJK-A4-LANDSCAPE • SISWA {studentNo} • ID: {exam.id}] Terkalibrasi Kyocera M2535dn</span>
         <span className="font-bold">KEMENAG / DISDIK</span>
       </div>
     </div>
@@ -238,18 +238,24 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       <style>{`
         @media print {
           @page {
-            size: ${isLandscapeDivided ? 'A4 landscape' : 'A4 portrait'};
-            margin: ${isLandscapeDivided ? '5mm 4.25mm 5mm 4.25mm' : '8mm 8mm 8mm 8mm'} !important;
+            size: ${isLandscapeDivided ? '297mm 210mm' : '210mm 297mm'};
+            margin: 0mm !important;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           html, body {
             background-color: #ffffff !important;
             color: #000000 !important;
             margin: 0 !important;
             padding: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            width: ${isLandscapeDivided ? '297mm' : '210mm'} !important;
+            height: ${isLandscapeDivided ? '210mm' : '297mm'} !important;
+            max-width: ${isLandscapeDivided ? '297mm' : '210mm'} !important;
+            max-height: ${isLandscapeDivided ? '210mm' : '297mm'} !important;
+            overflow: hidden !important;
           }
           body * {
             visibility: hidden !important;
@@ -260,23 +266,73 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           }
           #printable-ljk-container {
             position: fixed !important;
-            top: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            left: ${isLandscapeDivided ? '4.25mm' : '8mm'} !important;
-            right: ${isLandscapeDivided ? '4.25mm' : '8mm'} !important;
-            bottom: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            width: calc(${isLandscapeDivided ? '297mm - 8.5mm' : '210mm - 16mm'}) !important;
-            height: calc(${isLandscapeDivided ? '210mm - 10mm' : '297mm - 16mm'}) !important;
-            max-height: 100vh !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: ${isLandscapeDivided ? '297mm' : '210mm'} !important;
+            height: ${isLandscapeDivided ? '210mm' : '297mm'} !important;
+            max-width: ${isLandscapeDivided ? '297mm' : '210mm'} !important;
+            max-height: ${isLandscapeDivided ? '210mm' : '297mm'} !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: ${isLandscapeDivided ? '5mm 4.25mm' : '8mm'} !important;
             background: #ffffff !important;
             box-sizing: border-box !important;
             z-index: 9999999 !important;
             display: flex !important;
             flex-direction: ${isLandscapeDivided ? 'row' : 'column'} !important;
             justify-content: space-between !important;
+            align-items: stretch !important;
             page-break-inside: avoid !important;
             page-break-after: avoid !important;
+            page-break-before: avoid !important;
+            overflow: hidden !important;
+          }
+          .print-ljk-half {
+            width: 140mm !important;
+            max-width: 140mm !important;
+            min-width: 140mm !important;
+            height: 200mm !important;
+            max-height: 200mm !important;
+            padding: 2.5mm !important;
+            box-sizing: border-box !important;
+            flex: 0 0 140mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            page-break-inside: avoid !important;
+          }
+          .print-cut-divider {
+            width: 8.5mm !important;
+            min-width: 8.5mm !important;
+            max-width: 8.5mm !important;
+            height: 200mm !important;
+            flex: 0 0 8.5mm !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+          }
+          .print-cut-divider::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 4mm !important;
+            bottom: 4mm !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            border-right: 1px dashed #000000 !important;
+          }
+          .print-ljk-full {
+            width: 194mm !important;
+            max-width: 194mm !important;
+            height: 281mm !important;
+            max-height: 281mm !important;
+            padding: 3.5mm !important;
+            box-sizing: border-box !important;
+            margin: 0 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            page-break-inside: avoid !important;
           }
         }
       `}</style>
@@ -526,7 +582,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                   /* LANDSCAPE A4 DIVIDED BY 2 (Side-by-side: 140mm Left + 140mm Right centered on 297x210mm) */
                   <div 
                     id="printable-ljk-container" 
-                    className="w-full max-w-[840px] bg-white p-3.5 sm:p-4 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-2 relative items-stretch"
+                    className="w-full max-w-[840px] bg-white p-3.5 sm:p-4 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-0 relative items-stretch"
                     style={{
                       aspectRatio: '297 / 210'
                     }}
@@ -534,8 +590,8 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                     {/* Left Half: LJK Siswa 1 (140 mm) */}
                     {renderSingleLjkHalf(1)}
 
-                    {/* Vertical Center Cut-Line Guide (Clean Minimalist Dashed Divider at 148.5mm) */}
-                    <div className="w-0 border-r border-dashed border-slate-300 print:border-black self-stretch my-2 shrink-0" />
+                    {/* Vertical Center Cut-Line Guide (Dashed Divider at precise center 148.5mm) */}
+                    <div className="print-cut-divider w-0 border-r border-dashed border-slate-300 print:border-none self-stretch my-2 shrink-0 flex items-center justify-center" />
 
                     {/* Right Half: LJK Siswa 2 (140 mm) */}
                     {renderSingleLjkHalf(2)}
@@ -544,7 +600,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                 /* FULL A4 PORTRAIT SHEET */
                 <div 
                   id="printable-ljk-container" 
-                  className="w-full max-w-[680px] bg-white p-5 sm:p-6 print:p-3 rounded-lg shadow-sm print:shadow-none border-2 border-slate-900 print:border-black text-slate-900 print:text-black flex flex-col justify-between relative"
+                  className="print-ljk-full w-full max-w-[680px] bg-white p-5 sm:p-6 print:p-2 rounded-lg shadow-sm print:shadow-none border-2 border-slate-900 print:border-black text-slate-900 print:text-black flex flex-col justify-between relative overflow-hidden"
                   style={{
                     aspectRatio: '210 / 297'
                   }}
