@@ -236,13 +236,14 @@ export function generatePrintableLjkFullA4(
 }
 
 /**
- * Generates and downloads Minimalist LJK A4 Divided by 2 in PORTRAIT Position (Full 1 Sheet: Top & Bottom A5)
+ * Generates and downloads Minimalist LJK A4 Divided by 2 (Full 1 Sheet A4 divided for 2 Students)
+ * Supports Landscape (Left & Right halves) or Portrait (Top & Bottom halves) for 50% paper saving.
  */
 export function generatePrintableLjkA4DividedBy2(
   exam: ExamConfig,
   teacher: TeacherProfile,
-  orientation: 'portrait' | 'landscape' = 'portrait',
-  marginLeftMm: number = 15 // Default 1.5 cm left margin
+  orientation: 'portrait' | 'landscape' = 'landscape',
+  marginMm: number = 8
 ): void {
   const isPortrait = orientation === 'portrait';
 
@@ -259,15 +260,15 @@ export function generatePrintableLjkA4DividedBy2(
   if (isPortrait) {
     // PORTRAIT: Top (Y: 0..148.5) and Bottom (Y: 148.5..297)
     const halfHeight = pageHeight / 2; // 148.5mm per LJK
-    const marginLeft = marginLeftMm; // 25 mm = 2.5 cm
-    const marginRight = 8;
-    const marginY = 5;
+    const marginLeft = marginMm;
+    const marginRight = marginMm;
+    const marginY = 6;
 
     [0, halfHeight].forEach((offsetY, sheetIndex) => {
       const startX = marginLeft;
       const startY = offsetY + marginY;
-      const sheetW = pageWidth - marginLeft - marginRight; // 177mm
-      const sheetH = halfHeight - marginY * 2; // 138.5mm
+      const sheetW = pageWidth - marginLeft - marginRight;
+      const sheetH = halfHeight - marginY * 2;
 
       // 1. Fiducial Corner Markers
       const markerSize = 3.5;
@@ -282,7 +283,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.setFontSize(8.5);
       doc.text(teacher.namaSekolah.toUpperCase(), startX + sheetW / 2, startY + 4.5, { align: 'center' });
       doc.setFontSize(7.5);
-      doc.text('LEMBAR JAWABAN KOMPUTER (LJK) - FORMAT A4 DIBAGI 2', startX + sheetW / 2, startY + 8.5, { align: 'center' });
+      doc.text('LEMBAR JAWABAN KOMPUTER (LJK) - A4 DIBAGI 2', startX + sheetW / 2, startY + 8.5, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.text(`Mata Pelajaran: ${exam.subject} | Kelas: ${exam.gradeClass} | Th. Ajaran: ${teacher.tahunAjaran} (${teacher.semester})`, startX + sheetW / 2, startY + 12, { align: 'center' });
@@ -295,11 +296,11 @@ export function generatePrintableLjkA4DividedBy2(
       // 3. Petunjuk Singkat
       doc.setFontSize(5);
       doc.setFont('helvetica', 'italic');
-      doc.text('Petunjuk: Hitamkan penuh bulatan [O] dengan Pensil 2B / Pulpen Hitam. Jangan terlipat, robek, atau kotor.', startX + 4, startY + 16.8);
+      doc.text('Petunjuk: Hitamkan penuh bulatan [●] dengan Pensil 2B / Pulpen Hitam. Jangan terlipat, robek, atau kotor.', startX + 4, startY + 16.8);
 
       // 4. Main Body: Split into Left Box (Identitas) and Right Box (Pilihan Ganda)
       const contentStartY = startY + 18.5;
-      const idBoxW = 82;
+      const idBoxW = 84;
       const ansBoxW = sheetW - idBoxW - 4;
 
       // --- LEFT BOX: Identitas & NISN & Paket ---
@@ -317,29 +318,29 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('NAMA PESERTA:', idBoxX + 2.5, idBoxY + 3.8);
       doc.rect(idBoxX + 2.5, idBoxY + 4.8, idBoxW - 5, 4.5);
 
-      // NISN (9 DIGIT)
-      doc.text('NOMOR PESERTA / NISN (9 DIGIT):', idBoxX + 2.5, idBoxY + 13);
+      // NISN (10 DIGIT)
+      doc.text('NOMOR PESERTA / NISN (10 DIGIT):', idBoxX + 2.5, idBoxY + 13);
       const digitStartX = idBoxX + 3;
       const digitStartY = idBoxY + 14.5;
-      const colSpacing = 5.8;
+      const colSpacing = 5.4;
       const rowSpacing = 2.8;
 
-      for (let c = 0; c < 9; c++) {
+      for (let c = 0; c < 10; c++) {
         const cx = digitStartX + c * colSpacing;
-        doc.rect(cx - 1.2, digitStartY, 4.8, 3.2);
+        doc.rect(cx - 1.2, digitStartY, 4.5, 3.2);
         
         for (let r = 0; r <= 9; r++) {
           const cy = digitStartY + 4.8 + r * rowSpacing;
-          doc.circle(cx + 1.2, cy, 1.0);
+          doc.circle(cx + 1.1, cy, 1.0);
           doc.setFontSize(4.5);
           doc.setFont('helvetica', 'normal');
-          doc.text(r.toString(), cx + 1.2, cy + 0.5, { align: 'center' });
+          doc.text(r.toString(), cx + 1.1, cy + 0.5, { align: 'center' });
         }
       }
 
       // NISN Right details: Paket Soal, Tanggal, Tanda Tangan
-      const sideBoxX = digitStartX + 9 * colSpacing + 2.5;
-      const sideBoxW = idBoxW - (sideBoxX - idBoxX) - 2.5;
+      const sideBoxX = digitStartX + 10 * colSpacing + 1.5;
+      const sideBoxW = idBoxW - (sideBoxX - idBoxX) - 2;
 
       // Paket Soal Box
       doc.rect(sideBoxX, digitStartY, sideBoxW, 14);
@@ -350,9 +351,9 @@ export function generatePrintableLjkA4DividedBy2(
       ['A', 'B', 'C', 'D'].forEach((pkt, pIdx) => {
         const col = pIdx % 2;
         const row = Math.floor(pIdx / 2);
-        const px = sideBoxX + 4.5 + col * 10;
+        const px = sideBoxX + 3.5 + col * 9;
         const py = digitStartY + 6.5 + row * 4.5;
-        doc.circle(px, py, 1.2);
+        doc.circle(px, py, 1.1);
         doc.setFontSize(4.5);
         doc.setFont('helvetica', 'normal');
         doc.text(pkt, px, py + 0.5, { align: 'center' });
@@ -363,9 +364,9 @@ export function generatePrintableLjkA4DividedBy2(
       const signH = idBoxH - (signY - idBoxY) - 2;
       doc.rect(sideBoxX, signY, sideBoxW, signH);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(4.8);
-      doc.text('TGL: ___/___/202_', sideBoxX + 2, signY + 3.5);
-      doc.text('TTD PESERTA:', sideBoxX + 2, signY + 7);
+      doc.setFontSize(4.5);
+      doc.text('TGL: ___/___', sideBoxX + 1.5, signY + 3.5);
+      doc.text('TTD:', sideBoxX + 1.5, signY + 7);
 
       // --- RIGHT BOX: Lembar Pilihan Ganda (1 - N Soal) ---
       const ansBoxX = idBoxX + idBoxW + 2;
@@ -419,7 +420,7 @@ export function generatePrintableLjkA4DividedBy2(
       // Bottom Bar
       doc.setFontSize(4.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`[LJK-A4-BAGI-2 • SISWA ${sheetIndex + 1} • MARGIN KIRI 2.5CM] Scan via Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
+      doc.text(`[LJK-A4-BAGI-2 • SISWA ${sheetIndex + 1}] Scan via Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
     });
 
     // Horizontal Center Cut-Line
@@ -430,158 +431,203 @@ export function generatePrintableLjkA4DividedBy2(
     doc.setTextColor(100, 100, 100);
     doc.text('✂  --- GARIS POTONG TENGAH (A4 DIBAGI 2 / FORMAT A5 PER SISWA) ---  ✂', (marginLeft + (pageWidth - marginRight)) / 2, halfHeight - 1, { align: 'center' });
   } else {
-    // LANDSCAPE
-    const halfWidth = pageWidth / 2;
-    const marginLeft = marginLeftMm;
-    const marginRight = 8;
-    const marginY = 8;
+    // LANDSCAPE: Left (X: 0..148.5) and Right (X: 148.5..297)
+    const halfWidth = pageWidth / 2; // 148.5mm per LJK
+    const marginX = marginMm; // 8mm
+    const marginY = 7; // 7mm
 
     [0, halfWidth].forEach((offsetX, sheetIndex) => {
-      const startX = offsetX + (sheetIndex === 0 ? marginLeft : 8);
+      const startX = offsetX + marginX;
       const startY = marginY;
-      const sheetW = halfWidth - (sheetIndex === 0 ? marginLeft + 8 : 16);
-      const sheetH = pageHeight - marginY * 2;
+      const sheetW = halfWidth - marginX * 2; // ~132.5mm
+      const sheetH = pageHeight - marginY * 2; // ~196mm
 
-      // Fiducial Markers
-      const markerSize = 4;
+      // 1. Fiducial Corner Markers for scanner auto-calibration
+      const markerSize = 3.8;
       doc.setFillColor(0, 0, 0);
-      doc.rect(startX, startY, markerSize, markerSize, 'F');
-      doc.rect(startX + sheetW - markerSize, startY, markerSize, markerSize, 'F');
-      doc.rect(startX, startY + sheetH - markerSize, markerSize, markerSize, 'F');
-      doc.rect(startX + sheetW - markerSize, startY + sheetH - markerSize, markerSize, markerSize, 'F');
+      doc.rect(startX, startY, markerSize, markerSize, 'F'); // Top-Left
+      doc.rect(startX + sheetW - markerSize, startY, markerSize, markerSize, 'F'); // Top-Right
+      doc.rect(startX, startY + sheetH - markerSize, markerSize, markerSize, 'F'); // Bottom-Left
+      doc.rect(startX + sheetW - markerSize, startY + sheetH - markerSize, markerSize, markerSize, 'F'); // Bottom-Right
 
-      // Header
+      // 2. Official Header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
-      doc.text(teacher.namaSekolah.toUpperCase(), startX + sheetW / 2, startY + 5, { align: 'center' });
+      doc.text(teacher.namaSekolah.toUpperCase(), startX + sheetW / 2, startY + 4.5, { align: 'center' });
       doc.setFontSize(7.5);
-      doc.text('LEMBAR JAWABAN KOMPUTER (LJK) FORMAT MINIMALIS', startX + sheetW / 2, startY + 9, { align: 'center' });
+      doc.text('LEMBAR JAWABAN KOMPUTER (LJK)', startX + sheetW / 2, startY + 8.2, { align: 'center' });
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text(`Mata Pelajaran: ${exam.subject} | Kelas: ${exam.gradeClass} | Th. Ajaran: ${teacher.tahunAjaran}`, startX + sheetW / 2, startY + 12.5, { align: 'center' });
+      doc.setFontSize(6.2);
+      doc.text(`Mapel: ${exam.subject} | Kelas: ${exam.gradeClass} | Th. Ajaran: ${teacher.tahunAjaran}`, startX + sheetW / 2, startY + 11.5, { align: 'center' });
 
-      doc.setLineWidth(0.3);
-      doc.line(startX + 4, startY + 14.5, startX + sheetW - 4, startY + 14.5);
+      // Separator Double Line
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.4);
+      doc.line(startX + 3, startY + 13.2, startX + sheetW - 3, startY + 13.2);
+      doc.setLineWidth(0.15);
+      doc.line(startX + 3, startY + 14.0, startX + sheetW - 3, startY + 14.0);
 
-      // Identitas Siswa Box
-      const idBoxX = startX + 4;
-      const idBoxY = startY + 17;
-      const idBoxW = 70;
-      const idBoxH = 50;
+      // 3. Petunjuk Singkat
+      const petunjukY = startY + 15.2;
+      doc.setFillColor(248, 248, 248);
+      doc.rect(startX + 3, petunjukY, sheetW - 6, 6, 'F');
+      doc.rect(startX + 3, petunjukY, sheetW - 6, 6, 'S');
+      doc.setFontSize(5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PETUNJUK:', startX + 4.5, petunjukY + 2.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text('1. Hitamkan bulatan [●] dgn Pensil 2B/Pulpen. 2. Jgn lipat/robek. 3. Hapus bersih jika salah.', startX + 4.5, petunjukY + 4.8);
 
-      doc.setDrawColor(50, 50, 50);
+      // 4. Identitas Siswa Box (Left: NISN 10-Digit Matrix, Right: Nama, Paket, TTD)
+      const idStartY = petunjukY + 7.5;
+      const idBoxH = 62;
+      const idBoxW = sheetW - 6;
+
+      doc.setDrawColor(60, 60, 60);
       doc.setLineWidth(0.2);
-      doc.rect(idBoxX, idBoxY, idBoxW, idBoxH);
+      doc.rect(startX + 3, idStartY, idBoxW, idBoxH);
 
+      // Nama Peserta (Top Row)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(6);
-      doc.text('NAMA PESERTA:', idBoxX + 2, idBoxY + 4);
-      doc.rect(idBoxX + 2, idBoxY + 5.5, idBoxW - 4, 5);
+      doc.text('NAMA PESERTA:', startX + 5, idStartY + 3.8);
+      doc.rect(startX + 23, idStartY + 1.2, idBoxW - 22, 4.2);
+      doc.setFontSize(5);
+      doc.setFont('helvetica', 'italic');
+      doc.text('(Tuliskan nama lengkap peserta dengan huruf kapital)', startX + 25, idStartY + 4.0);
 
-      doc.text('NOMOR PESERTA (9 DIGIT):', idBoxX + 2, idBoxY + 14);
-      const digitStartX = idBoxX + 3;
-      const digitStartY = idBoxY + 16;
-      const colSpacing = 7.0;
-      const rowSpacing = 3.2;
+      // Left Column inside ID box: NISN 10 Digit Matrix
+      const nisnBoxW = 76;
+      const nisnStartY = idStartY + 6.8;
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.text('NOMOR PESERTA / NISN (10 DIGIT):', startX + 5, nisnStartY + 3.0);
 
-      for (let c = 0; c < 9; c++) {
+      const digitStartX = startX + 5.5;
+      const digitStartY = nisnStartY + 4.5;
+      const colSpacing = 6.8;
+      const rowSpacing = 3.4;
+
+      for (let c = 0; c < 10; c++) {
         const cx = digitStartX + c * colSpacing;
-        doc.rect(cx - 1.5, digitStartY - 1, 5.5, 3.5);
+        doc.rect(cx - 1.2, digitStartY, 5.2, 3.2); // input box
+        
         for (let r = 0; r <= 9; r++) {
-          const cy = digitStartY + 5.5 + r * rowSpacing;
-          doc.circle(cx + 1.2, cy, 1.1);
+          const cy = digitStartY + 5.0 + r * rowSpacing;
+          doc.setDrawColor(60, 60, 60);
+          doc.circle(cx + 1.4, cy, 1.2);
           doc.setFontSize(4.5);
           doc.setFont('helvetica', 'normal');
-          doc.text(r.toString(), cx + 1.2, cy + 0.6, { align: 'center' });
+          doc.text(r.toString(), cx + 1.4, cy + 0.6, { align: 'center' });
         }
       }
 
-      // Paket Soal
-      const pktBoxX = idBoxX + idBoxW + 3;
-      const pktBoxY = idBoxY;
-      const pktBoxW = sheetW - idBoxW - 10;
-      const pktBoxH = 22;
+      // Right Column inside ID box: Paket Soal, Ruang & Tanda Tangan
+      const rightColX = startX + 3 + nisnBoxW + 4;
+      const rightColW = idBoxW - nisnBoxW - 6;
 
-      doc.rect(pktBoxX, pktBoxY, pktBoxW, pktBoxH);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      doc.text('PAKET SOAL', pktBoxX + pktBoxW / 2, pktBoxY + 4, { align: 'center' });
-
-      ['A', 'B', 'C', 'D'].forEach((pkt, pIdx) => {
-        const px = pktBoxX + 4 + pIdx * (pktBoxW / 4);
-        const py = pktBoxY + 12;
-        doc.circle(px + 3.5, py, 1.6);
-        doc.setFontSize(5.5);
-        doc.text(pkt, px + 3.5, py + 0.8, { align: 'center' });
-      });
-
-      // Tanggal & TTD
-      const signBoxY = pktBoxY + pktBoxH + 2;
-      const signBoxH = idBoxH - pktBoxH - 2;
-      doc.rect(pktBoxX, signBoxY, pktBoxW, signBoxH);
-      doc.setFontSize(5);
-      doc.text('TANGGAL: ____/____/202__', pktBoxX + 2, signBoxY + 4);
-      doc.text('TANDA TANGAN SISWA:', pktBoxX + 2, signBoxY + 8);
-
-      // Answers Grid
-      const ansStartY = idBoxY + idBoxH + 4;
-      const totalQ = exam.totalQuestions;
-      const halfQ = Math.ceil(totalQ / 2);
-      const options: string[] = exam.optionsCount === 4 ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C', 'D', 'E'];
-
-      const col1X = startX + 4;
-      const col2X = startX + sheetW / 2 + 2;
-      const colW = sheetW / 2 - 6;
-
-      doc.setFillColor(240, 240, 240);
-      doc.rect(col1X, ansStartY, colW, 4, 'F');
+      // Paket Soal Box
+      doc.rect(rightColX, nisnStartY, rightColW, 14);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(5.5);
-      doc.text('NO. JAWABAN (1 - ' + halfQ + ')', col1X + colW / 2, ansStartY + 2.8, { align: 'center' });
+      doc.text('PAKET SOAL', rightColX + rightColW / 2, nisnStartY + 3.2, { align: 'center' });
 
-      if (totalQ > halfQ) {
-        doc.rect(col2X, ansStartY, colW, 4, 'F');
-        doc.text('NO. JAWABAN (' + (halfQ + 1) + ' - ' + totalQ + ')', col2X + colW / 2, ansStartY + 2.8, { align: 'center' });
-      }
+      ['A', 'B', 'C', 'D'].forEach((pkt, pIdx) => {
+        const px = rightColX + 4 + pIdx * (rightColW / 4);
+        const py = nisnStartY + 8.5;
+        doc.circle(px + 3, py, 1.4);
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(pkt, px + 3, py + 0.7, { align: 'center' });
+      });
 
-      const qRowH = Math.min(4.8, (sheetH - (ansStartY - startY) - 8) / halfQ);
-      const bubbleSpacing = 6.2;
+      // Ruang & Tanggal Box
+      const infoY = nisnStartY + 15.5;
+      doc.rect(rightColX, infoY, rightColW, 9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5);
+      doc.text(`RUANG : ${exam.gradeClass}`, rightColX + 2, infoY + 3.5);
+      doc.text(`TGL   : ${exam.date || '___/___/202_'}`, rightColX + 2, infoY + 7.5);
+
+      // TTD Peserta Box
+      const signY = infoY + 11;
+      const signH = idBoxH - (signY - idStartY) - 2;
+      doc.rect(rightColX, signY, rightColW, signH);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5);
+      doc.text('TTD PESERTA:', rightColX + 2, signY + 3.5);
+      doc.setLineDashPattern([1, 1], 0);
+      doc.line(rightColX + 4, signY + signH - 2, rightColX + rightColW - 4, signY + signH - 2);
+      doc.setLineDashPattern([], 0); // reset dash
+
+      // 5. Multiple Choice Answer Grid (1 - N Soal)
+      const ansStartY = idStartY + idBoxH + 3.5;
+      const ansBoxH = sheetH - (ansStartY - startY) - 5.5;
+      const totalQ = exam.totalQuestions;
+      const options: string[] = exam.optionsCount === 4 ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C', 'D', 'E'];
+
+      doc.rect(startX + 3, ansStartY, idBoxW, ansBoxH);
+
+      // Header Answers
+      doc.setFillColor(242, 242, 242);
+      doc.rect(startX + 3, ansStartY, idBoxW, 4, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.text(`LEMBAR JAWABAN PILIHAN GANDA (1 s.d ${totalQ})`, startX + 3 + idBoxW / 2, ansStartY + 2.8, { align: 'center' });
+
+      // Column calculations
+      const numCols = totalQ <= 25 ? 2 : totalQ <= 40 ? 3 : 4;
+      const qPerCol = Math.ceil(totalQ / numCols);
+      const colWidth = (idBoxW - 4) / numCols;
+      const rowSpacingAns = Math.min(4.8, (ansBoxH - 6.5) / qPerCol);
+      const bubbleSpacing = exam.optionsCount === 4 ? 4.8 : 4.0;
 
       for (let q = 1; q <= totalQ; q++) {
-        const isCol2 = q > halfQ;
-        const rowIdx = isCol2 ? q - halfQ - 1 : q - 1;
-        const rowX = isCol2 ? col2X : col1X;
-        const rowY = ansStartY + 5.5 + rowIdx * qRowH;
+        const colIdx = Math.floor((q - 1) / qPerCol);
+        const rowIdx = (q - 1) % qPerCol;
 
+        const qX = startX + 5 + colIdx * colWidth;
+        const qY = ansStartY + 6.0 + rowIdx * rowSpacingAns;
+
+        // Question Number
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(5);
-        doc.text(q.toString().padStart(2, '0') + '.', rowX + 2, rowY + 0.8);
+        doc.text(q.toString().padStart(2, '0') + '.', qX + 1, qY + 0.6);
 
+        // Bubbles
         options.forEach((opt, optIdx) => {
-          const bx = rowX + 7.0 + optIdx * bubbleSpacing;
-          const by = rowY;
-          doc.circle(bx, by, 1.4);
+          const bx = qX + 5.5 + optIdx * bubbleSpacing;
+          const by = qY;
+
+          doc.setDrawColor(60, 60, 60);
+          doc.setLineWidth(0.18);
+          doc.circle(bx, by, 1.3);
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(4.5);
-          doc.text(opt, bx, by + 0.6, { align: 'center' });
+          doc.text(opt, bx, by + 0.5, { align: 'center' });
         });
       }
 
+      // Footer Info
       doc.setFontSize(4.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`[LJK-ID: ${exam.id}-S${sheetIndex + 1}] Valid for Kyocera M2535dn`, startX + 6, startY + sheetH - 2);
+      doc.text(`[LJK-A4-LANDSCAPE-BAGI-2 • SISWA ${sheetIndex + 1} • ID: ${exam.id}] Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('KEMENAG / DISDIK', startX + sheetW - 4, startY + sheetH - 1.5, { align: 'right' });
     });
 
-    // Vertical cut line
-    doc.setDrawColor(150, 150, 150);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.line(halfWidth, 5, halfWidth, pageHeight - 5);
-    doc.setFontSize(6);
-    doc.setTextColor(120, 120, 120);
-    doc.text('✂ GARIS POTONG (A4 DIBAGI 2) ✂', halfWidth, 6, { align: 'center', angle: 90 });
+    // Vertical Center Cut Line (Potong Tengah)
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineDashPattern([2, 1.5], 0);
+    doc.line(halfWidth, 4, halfWidth, pageHeight - 4);
+    doc.setFontSize(5.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text('✂  --- GARIS POTONG TENGAH (A4 DIBAGI 2 / 2 SISWA PER LEMBAR) ---  ✂', halfWidth, 5, { align: 'center', angle: 90 });
   }
 
-  doc.save(`LJK-A4-Bagi-2-Margin2.5cm-${exam.subject.replace(/\s+/g, '-')}.pdf`);
+  const orientationLabel = isPortrait ? 'Portrait' : 'Landscape';
+  doc.save(`LJK-A4-${orientationLabel}-Bagi-2-${exam.subject.replace(/\s+/g, '-')}.pdf`);
 }
 
 /**
