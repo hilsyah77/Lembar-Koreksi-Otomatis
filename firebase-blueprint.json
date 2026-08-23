@@ -1,0 +1,115 @@
+{
+  "$schema": "https://firebase.google.com/docs/firestore/blueprint.json",
+  "entities": {
+    "exams": {
+      "title": "Exam Configurations",
+      "description": "Master configurations for exams, answer keys, packet keys, and scoring parameters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "gradeClass": { "type": "string" },
+        "date": { "type": "string" },
+        "totalQuestions": { "type": "number" },
+        "optionsCount": { "type": "number" },
+        "packets": { "type": "array" },
+        "questionWeights": { "type": "object" },
+        "penaltyNegativeScore": { "type": "number" },
+        "kkm": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "subject", "totalQuestions", "packets", "kkm"]
+    },
+    "students": {
+      "title": "Student Roster",
+      "description": "Student master records containing ID, NISN, name, and class",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentNo": { "type": "string" },
+        "name": { "type": "string" },
+        "classId": { "type": "string" },
+        "gender": { "type": "string" }
+      },
+      "required": ["id", "studentNo", "name", "classId"]
+    },
+    "scanResults": {
+      "title": "OMR Scan & Evaluation Results",
+      "description": "Records of processed LJK sheets with scores, detected answers, and status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "examId": { "type": "string" },
+        "studentNo": { "type": "string" },
+        "studentName": { "type": "string" },
+        "classId": { "type": "string" },
+        "packetCode": { "type": "string" },
+        "rawScore": { "type": "number" },
+        "finalScore": { "type": "number" },
+        "correctCount": { "type": "number" },
+        "incorrectCount": { "type": "number" },
+        "unansweredCount": { "type": "number" },
+        "isPassed": { "type": "boolean" },
+        "status": { "type": "string" },
+        "answers": { "type": "object" },
+        "scannedAt": { "type": "string" }
+      },
+      "required": ["id", "examId", "studentNo", "finalScore", "status", "answers"]
+    },
+    "teacherProfile": {
+      "title": "Teacher Profile",
+      "description": "Teacher credentials and school metadata",
+      "type": "object",
+      "properties": {
+        "namaGuru": { "type": "string" },
+        "nip": { "type": "string" },
+        "namaSekolah": { "type": "string" },
+        "mataPelajaran": { "type": "string" },
+        "tingkatKelas": { "type": "string" },
+        "semester": { "type": "string" },
+        "tahunAjaran": { "type": "string" },
+        "kkmDefault": { "type": "number" },
+        "kontakEmail": { "type": "string" },
+        "tandaTanganNama": { "type": "string" }
+      },
+      "required": ["namaGuru", "namaSekolah", "mataPelajaran", "tahunAjaran"]
+    },
+    "kyoceraConfig": {
+      "title": "Kyocera Scanner Settings",
+      "description": "Network and ADF scanner configuration",
+      "type": "object",
+      "properties": {
+        "printerModel": { "type": "string" },
+        "ipAddress": { "type": "string" },
+        "port": { "type": "number" },
+        "protocol": { "type": "string" },
+        "resolutionDpi": { "type": "number" },
+        "colorMode": { "type": "string" },
+        "duplexMode": { "type": "string" },
+        "autoSplitA4ToA5": { "type": "boolean" },
+        "enableAutoCorrect": { "type": "boolean" },
+        "pollingIntervalSeconds": { "type": "number" }
+      },
+      "required": ["ipAddress", "port"]
+    }
+  },
+  "firestore": {
+    "/exams/{examId}": {
+      "entity": "exams"
+    },
+    "/students/{studentId}": {
+      "entity": "students"
+    },
+    "/scanResults/{resultId}": {
+      "entity": "scanResults"
+    },
+    "/settings/teacherProfile": {
+      "entity": "teacherProfile"
+    },
+    "/settings/kyoceraConfig": {
+      "entity": "kyoceraConfig"
+    }
+  }
+}

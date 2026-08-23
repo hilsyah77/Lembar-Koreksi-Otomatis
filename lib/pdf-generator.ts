@@ -4,12 +4,12 @@ import { TeacherProfile, ExamConfig, ScanResult, ClassAnalytics } from '@/types/
 
 /**
  * Generates and downloads Full 1-Sheet A4 LJK (Single Student per Page, Full 1 Lembar A4 Portrait)
- * Configured with 1.5 cm (15 mm) Left Margin for neat border spacing, folder punching & scanner ADF alignment.
+ * Configured with standard symmetric margins for neat border spacing & camera/scanner ADF alignment.
  */
 export function generatePrintableLjkFullA4(
   exam: ExamConfig,
   teacher: TeacherProfile,
-  marginLeftMm: number = 15 // Default 1.5 cm left margin
+  marginMm: number = 10 // Standard 10mm symmetric margin
 ): void {
   // A4 Portrait: 210mm x 297mm
   const doc = new jsPDF({
@@ -20,12 +20,12 @@ export function generatePrintableLjkFullA4(
 
   const pageWidth = 210;
   const pageHeight = 297;
-  const marginLeft = marginLeftMm; // 15 mm = 1.5 cm
-  const marginRight = 8;
-  const marginTop = 7;
-  const marginBottom = 7;
-  const sheetW = pageWidth - marginLeft - marginRight; // 187mm (at 15mm margin)
-  const sheetH = pageHeight - marginTop - marginBottom; // 283mm
+  const marginLeft = marginMm;
+  const marginRight = marginMm;
+  const marginTop = 8;
+  const marginBottom = 8;
+  const sheetW = pageWidth - marginLeft - marginRight;
+  const sheetH = pageHeight - marginTop - marginBottom;
 
   // 1. Fiducial Corner Markers (5mm x 5mm black squares for scanner alignment)
   const markerSize = 5;
@@ -224,16 +224,15 @@ export function generatePrintableLjkFullA4(
   const footerY = marginTop + sheetH - 3.5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
-  const marginLabel = (marginLeftMm / 10).toFixed(1);
   doc.text(
-    `[LJK STANDAR A4 1 LEMBAR • ID: ${exam.id} • MARGIN KIRI: ${marginLabel} CM] Terkalibrasi ADF Kyocera ECOSYS M2535dn`,
+    `[LJK STANDAR A4 • ID: ${exam.id}] Terkalibrasi ADF Kyocera ECOSYS M2535dn & Kamera Ponsel`,
     marginLeft + 4,
     footerY
   );
   doc.setFont('helvetica', 'bold');
   doc.text('KEMENTERIAN AGAMA / DINAS PENDIDIKAN', marginLeft + sheetW - 4, footerY, { align: 'right' });
 
-  doc.save(`LJK-Standar-A4-Margin${marginLabel}cm-${exam.subject.replace(/\s+/g, '-')}.pdf`);
+  doc.save(`LJK-Standar-A4-${exam.subject.replace(/\s+/g, '-')}.pdf`);
 }
 
 /**

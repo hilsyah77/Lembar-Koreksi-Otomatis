@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Cloud, 
   Download, 
@@ -13,9 +13,12 @@ import {
   RefreshCw, 
   ShieldCheck,
   HardDrive,
-  Trash2
+  Trash2,
+  Server,
+  Radio
 } from 'lucide-react';
 import { AppState, exportBackupData, importBackupData } from '@/lib/storage';
+import { syncStateToFirestore, fetchStateFromFirestore } from '@/lib/firestore-service';
 
 interface CloudSyncModalProps {
   isOpen: boolean;
@@ -33,6 +36,7 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   onOpenDatabaseManager
 }) => {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isPulling, setIsPulling] = useState<boolean>(false);
   const [syncSuccessMsg, setSyncSuccessMsg] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -42,14 +46,43 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
     setIsSyncing(true);
     setErrorMessage(null);
     try {
-      // Simulate real-time cloud sync ping & payload handshake
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setSyncSuccessMsg('Semua data ujian, siswa, dan hasil koreksi berhasil disinkronkan ke Cloud Server.');
-      setTimeout(() => setSyncSuccessMsg(null), 4000);
+      await syncStateToFirestore(currentState);
+      setSyncSuccessMsg('Seluruh data ujian, daftar siswa, profil guru, & hasil koreksi LJK berhasil disimpan ke Firebase Firestore Database!');
+      setTimeout(() => setSyncSuccessMsg(null), 5000);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Gagal sinkronisasi ke cloud');
+      setErrorMessage('Gagal sinkronisasi ke Firebase: ' + (err.message || 'Koneksi error'));
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handlePullFromFirestore = async () => {
+    setIsPulling(true);
+    setErrorMessage(null);
+    try {
+      const pulledState = await fetchStateFromFirestore();
+      if (!pulledState.exams && !pulledState.results && !pulledState.students) {
+        setErrorMessage('Database cloud masih kosong. Silakan klik "Upload ke Cloud Database" terlebih dahulu.');
+        return;
+      }
+      
+      const merged: AppState = {
+        teacher: pulledState.teacher || currentState.teacher,
+        kyocera: pulledState.kyocera || currentState.kyocera,
+        exams: (pulledState.exams && pulledState.exams.length > 0) ? pulledState.exams : currentState.exams,
+        students: (pulledState.students && pulledState.students.length > 0) ? pulledState.students : currentState.students,
+        results: pulledState.results || currentState.results,
+        activeExamId: pulledState.exams?.[0]?.id || currentState.activeExamId,
+        lastSyncedAt: new Date().toISOString()
+      };
+
+      onRestoreState(merged);
+      setSyncSuccessMsg(`Data berhasil dimuat dari Firestore! (${merged.exams.length} Ujian, ${merged.students.length} Siswa, ${merged.results.length} Hasil Koreksi)`);
+      setTimeout(() => setSyncSuccessMsg(null), 4000);
+    } catch (err: any) {
+      setErrorMessage('Gagal memuat dari Cloud Firestore: ' + (err.message || 'Koneksi error'));
+    } finally {
+      setIsPulling(false);
     }
   };
 
@@ -123,24 +156,34 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-sky-600" />
-                <span className="font-bold text-slate-900 text-sm">Cloud Storage Sync</span>
+                <span className="font-bold text-slate-900 text-sm">Firebase Cloud Firestore</span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                Tersambung
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                Database Aktif
               </span>
             </div>
             <p className="text-slate-600 leading-relaxed font-medium">
-              Sinkronkan data ujian aktif, profil guru pengampu, daftar siswa, dan seluruh hasil koreksi LJK secara terenkripsi untuk dibuka di Laptop, Komputer Ruang Guru, atau Smartphone.
+              Simpan data master ujian, kunci jawaban, profil sekolah/guru, daftar siswa & NISN, serta seluruh hasil koreksi LJK secara persisten di Google Cloud Firestore.
             </p>
 
-            <div className="pt-2 flex items-center gap-3">
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
               <button
                 onClick={handleCloudSync}
-                disabled={isSyncing}
-                className="flex-1 py-2.5 px-4 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-sky-200 transition-all"
+                disabled={isSyncing || isPulling}
+                className="w-full sm:flex-1 py-2.5 px-4 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-sky-200 transition-all text-xs"
               >
-                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                {isSyncing ? 'Menyinkronkan...' : 'Sinkronkan Sekarang'}
+                <Upload className={`w-3.5 h-3.5 ${isSyncing ? 'animate-bounce' : ''}`} />
+                {isSyncing ? 'Mengunggah ke Cloud...' : 'Simpan / Upload ke Firestore'}
+              </button>
+
+              <button
+                onClick={handlePullFromFirestore}
+                disabled={isSyncing || isPulling}
+                className="w-full sm:flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-slate-200 transition-all text-xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin' : ''}`} />
+                {isPulling ? 'Memuat Data...' : 'Muat Data dari Cloud'}
               </button>
             </div>
           </div>

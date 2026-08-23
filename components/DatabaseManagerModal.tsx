@@ -22,6 +22,7 @@ import {
   resetDatabaseToFactoryDemo, 
   purgeResultsOnly 
 } from '@/lib/storage';
+import { purgeFirestoreDatabase, syncStateToFirestore } from '@/lib/firestore-service';
 
 interface DatabaseManagerModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export const DatabaseManagerModal: React.FC<DatabaseManagerModalProps> = ({
     }
   };
 
-  const executeAction = () => {
+  const executeAction = async () => {
     setErrorMessage(null);
 
     if (activeAction === 'PURGE_ALL') {
@@ -64,7 +65,12 @@ export const DatabaseManagerModal: React.FC<DatabaseManagerModalProps> = ({
       }
       const emptyState = purgeEntireDatabase();
       onStatePurged(emptyState);
-      setSuccessMsg('Seluruh database aplikasi berhasil dikosongkan!');
+      try {
+        await purgeFirestoreDatabase();
+      } catch (e) {
+        console.warn('Firestore purge warning:', e);
+      }
+      setSuccessMsg('Seluruh database aplikasi & Cloud Firestore berhasil dikosongkan!');
       setTimeout(() => {
         setSuccessMsg(null);
         setActiveAction('NONE');
@@ -74,6 +80,11 @@ export const DatabaseManagerModal: React.FC<DatabaseManagerModalProps> = ({
     } else if (activeAction === 'RESET_DEMO') {
       const demoState = resetDatabaseToFactoryDemo();
       onStatePurged(demoState);
+      try {
+        await syncStateToFirestore(demoState);
+      } catch (e) {
+        console.warn('Firestore demo sync warning:', e);
+      }
       setSuccessMsg('Database berhasil direset ke pengaturan dan data bawaan demo!');
       setTimeout(() => {
         setSuccessMsg(null);

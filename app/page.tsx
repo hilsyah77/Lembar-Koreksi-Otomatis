@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Navbar, 
   TabType 
@@ -16,6 +16,7 @@ import { ExamConfigModal } from '@/components/ExamConfigModal';
 import { StudentListModal } from '@/components/StudentListModal';
 import { CloudSyncModal } from '@/components/CloudSyncModal';
 import { DatabaseManagerModal } from '@/components/DatabaseManagerModal';
+import { FirebaseStatusBanner } from '@/components/FirebaseStatusBanner';
 
 import { 
   ExamConfig, 
@@ -26,7 +27,10 @@ import {
 } from '@/types/omr';
 import { 
   INITIAL_EXAM, 
+  INITIAL_EXAMS,
   INITIAL_STUDENTS, 
+  INITIAL_TEACHER_PROFILE,
+  INITIAL_KYOCERA_SETTINGS,
   generateSampleScanResults 
 } from '@/lib/mock-data';
 import { 
@@ -42,29 +46,24 @@ import {
   getStoredResults, 
   saveResults 
 } from '@/lib/storage';
+import { 
+  saveScanResultToFirestore, 
+  saveBatchScanResultsToFirestore,
+  saveExamToFirestore,
+  syncStateToFirestore,
+  fetchStateFromFirestore
+} from '@/lib/firestore-service';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('CAMERA');
   
-  // App States
-  const [exams, setExams] = useState<ExamConfig[]>(() => {
-    const loaded = getStoredExams();
-    return loaded.length > 0 ? loaded : [INITIAL_EXAM];
-  });
-  const [activeExamId, setActiveExamId] = useState<string>(() => {
-    const loaded = getStoredExams();
-    return loaded.length > 0 ? loaded[0].id : INITIAL_EXAM.id;
-  });
-  const [students, setStudents] = useState<Student[]>(() => getStoredStudents());
-  const [teacher, setTeacher] = useState<TeacherProfile>(() => getStoredTeacherProfile());
-  const [kyocera, setKyocera] = useState<KyoceraSettings>(() => getStoredKyoceraSettings());
-  const [results, setResults] = useState<ScanResult[]>(() => {
-    const loaded = getStoredResults();
-    if (loaded.length > 0) return loaded;
-    const initialScans = generateSampleScanResults(INITIAL_EXAM, INITIAL_STUDENTS);
-    saveResults(initialScans);
-    return initialScans;
-  });
+  // App States initialized with deterministic server-safe defaults to prevent hydration mismatch
+  const [exams, setExams] = useState<ExamConfig[]>(INITIAL_EXAMS);
+  const [activeExamId, setActiveExamId] = useState<string>(INITIAL_EXAM.id);
+  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
+  const [teacher, setTeacher] = useState<TeacherProfile>(INITIAL_TEACHER_PROFILE);
+  const [kyocera, setKyocera] = useState<KyoceraSettings>(INITIAL_KYOCERA_SETTINGS);
+  const [results, setResults] = useState<ScanResult[]>(() => generateSampleScanResults(INITIAL_EXAM, INITIAL_STUDENTS));
 
   // Modal States
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState<boolean>(false);
@@ -72,6 +71,77 @@ export default function Home() {
   const [isStudentModalOpen, setIsStudentModalOpen] = useState<boolean>(false);
   const [isCloudModalOpen, setIsCloudModalOpen] = useState<boolean>(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState<boolean>(false);
+
+  // Client-side hydration from localStorage & Firestore
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadHydratedData() {
+      // Async tick to avoid synchronous cascading renders during effect mount
+      await Promise.resolve();
+      if (isCancelled) return;
+
+      try {
+        const storedExams = getStoredExams();
+        if (storedExams && storedExams.length > 0) {
+          setExams(storedExams);
+          setActiveExamId(prev => storedExams.some(e => e.id === prev) ? prev : storedExams[0].id);
+        }
+        const storedStudents = getStoredStudents();
+        if (storedStudents && storedStudents.length > 0) {
+          setStudents(storedStudents);
+        }
+        const storedTeacher = getStoredTeacherProfile();
+        if (storedTeacher) {
+          setTeacher(storedTeacher);
+        }
+        const storedKyocera = getStoredKyoceraSettings();
+        if (storedKyocera) {
+          setKyocera(storedKyocera);
+        }
+        const storedResults = getStoredResults();
+        if (storedResults && storedResults.length > 0) {
+          setResults(storedResults);
+        }
+      } catch (err) {
+        console.warn('Local storage hydration fallback:', err);
+      }
+
+      try {
+        const cloudData = await fetchStateFromFirestore();
+        if (isCancelled) return;
+        if (cloudData.exams && cloudData.exams.length > 0) {
+          setExams(cloudData.exams);
+          saveExams(cloudData.exams);
+          setActiveExamId(prev => cloudData.exams!.some(e => e.id === prev) ? prev : cloudData.exams![0].id);
+        }
+        if (cloudData.students && cloudData.students.length > 0) {
+          setStudents(cloudData.students);
+          saveStudents(cloudData.students);
+        }
+        if (cloudData.results && cloudData.results.length > 0) {
+          setResults(cloudData.results);
+          saveResults(cloudData.results);
+        }
+        if (cloudData.teacher) {
+          setTeacher(cloudData.teacher);
+          saveTeacherProfile(cloudData.teacher);
+        }
+        if (cloudData.kyocera) {
+          setKyocera(cloudData.kyocera);
+          saveKyoceraSettings(cloudData.kyocera);
+        }
+      } catch {
+        // Silently use offline cache
+      }
+    }
+
+    loadHydratedData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const activeExam = exams.find(e => e.id === activeExamId) || exams[0] || INITIAL_EXAM;
 
@@ -87,6 +157,8 @@ export default function Home() {
         updated = [newResult, ...prev];
       }
       saveResults(updated);
+      // Persist to Cloud Firestore in background
+      saveScanResultToFirestore(newResult).catch(() => {});
       return updated;
     });
   };
@@ -99,6 +171,8 @@ export default function Home() {
       batch.forEach(r => mergedMap.set(`${r.studentNo}-${r.examId}`, r));
       const updated = Array.from(mergedMap.values());
       saveResults(updated);
+      // Persist batch to Cloud Firestore in background
+      saveBatchScanResultsToFirestore(batch).catch(() => {});
       return updated;
     });
   };
@@ -310,6 +384,11 @@ export default function Home() {
         currentState={currentAppState}
         onStatePurged={handleStatePurged}
         onResultsPurged={handleResultsPurged}
+      />
+
+      {/* Floating Firebase Connection Notification & Live Monitor */}
+      <FirebaseStatusBanner 
+        onOpenCloudModal={() => setIsCloudModalOpen(true)} 
       />
     </div>
   );

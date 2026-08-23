@@ -15,9 +15,11 @@ import {
   CheckCircle2, 
   Wifi,
   Users,
-  Trash2
+  Trash2,
+  Flame
 } from 'lucide-react';
 import { ExamConfig, TeacherProfile, KyoceraSettings } from '@/types/omr';
+import { FIREBASE_PROJECT_INFO } from '@/lib/firestore-service';
 
 export type TabType = 'CAMERA' | 'KYOCERA' | 'RESULTS' | 'ANALYTICS' | 'HISTORY' | 'LJK_TEMPLATE';
 
@@ -105,6 +107,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right: Hardware & Profile Quick Actions */}
         <div className="flex items-center gap-2.5">
+          {/* Firebase Cloud Firestore Status Pill */}
+          <button 
+            onClick={onOpenCloudModal}
+            title={`Firebase Firestore Connected | Project: ${FIREBASE_PROJECT_INFO.projectId}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 rounded-full border border-amber-200 text-xs font-semibold hover:bg-amber-100/80 transition-all shadow-xs"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-600/20" />
+            <span className="font-sans text-xs hidden sm:inline">Firebase Firestore: Terhubung</span>
+            <span className="font-sans text-xs sm:hidden">Firebase</span>
+          </button>
+
           {/* Kyocera Status Pill */}
           <button 
             onClick={() => setActiveTab('KYOCERA')}

@@ -46,11 +46,42 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const [consecutiveStableFrames, setConsecutiveStableFrames] = useState<number>(0);
   const [scanCountSession, setScanCountSession] = useState<number>(0);
 
+  // Safe Camera Acquisition with Fallbacks (Back Cam -> Any Cam)
+  const acquireCameraStream = useCallback(async (): Promise<MediaStream | null> => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return null;
+    }
+    
+    // Attempt 1: Document camera / back camera
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+    } catch {
+      // Attempt 2: Fallback to any active video input (Webcam / USB Camera)
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+      } catch {
+        return null;
+      }
+    }
+  }, []);
+
   // Stop Camera Stream
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        try {
+          track.stop();
+        } catch {}
+      });
       videoRef.current.srcObject = null;
     }
     setIsCameraActive(false);
@@ -58,26 +89,25 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   // Manual Retry Start Camera Stream
   const startCamera = useCallback(async () => {
+    setCameraError(null);
     try {
-      setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-      if (videoRef.current) {
+      const stream = await acquireCameraStream();
+      if (stream && videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {});
+        }
         setIsCameraActive(true);
+      } else {
+        setCameraError('Kamera tidak terdeteksi atau izin belum diberikan. Anda dapat mengunggah foto LJK langsung atau menggunakan scanner ADF.');
+        setIsCameraActive(false);
       }
-    } catch (err: any) {
-      console.error('Camera stream error:', err);
-      setCameraError('Gagal mengakses kamera. Pastikan izin kamera aktif atau gunakan mode Upload LJK.');
+    } catch {
+      setCameraError('Kamera tidak dapat diakses. Pastikan izin kamera aktif atau gunakan mode Upload LJK.');
       setIsCameraActive(false);
     }
-  }, []);
+  }, [acquireCameraStream]);
 
   // Capture & Evaluate LJK
   const handleCaptureAndProcess = useCallback(async (customFile?: File) => {
@@ -185,31 +215,51 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    navigator.mediaDevices?.getUserMedia({
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+    let currentStream: MediaStream | null = null;
+
+    async function mountCamera() {
+      try {
+        const stream = await acquireCameraStream();
+        if (!isMounted) {
+          if (stream) stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
+        if (stream && videoRef.current) {
+          currentStream = stream;
+          videoRef.current.srcObject = stream;
+          const playPromise = videoRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+          }
+          setIsCameraActive(true);
+          setCameraError(null);
+        } else if (isMounted) {
+          setCameraError('Kamera tidak terdeteksi atau izin belum diberikan. Anda dapat mengklik "Mulai Kamera", izinkan browser, atau unggah foto LJK.');
+          setIsCameraActive(false);
+        }
+      } catch {
+        if (isMounted) {
+          setCameraError('Kamera belum aktif. Klik "Mulai Kamera" atau gunakan opsi Upload Foto LJK.');
+          setIsCameraActive(false);
+        }
       }
-    }).then(stream => {
-      if (isMounted && videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setIsCameraActive(true);
-      }
-    }).catch(err => {
-      console.error('Camera stream auto-mount error:', err);
-      if (isMounted) {
-        setCameraError('Gagal mengakses kamera otomatis. Pastikan izin kamera diizinkan atau klik coba lagi.');
-        setIsCameraActive(false);
-      }
-    });
+    }
+
+    mountCamera();
 
     return () => {
       isMounted = false;
+      if (currentStream) {
+        currentStream.getTracks().forEach(t => {
+          try {
+            t.stop();
+          } catch {}
+        });
+      }
       stopCamera();
     };
-  }, [stopCamera]);
+  }, [acquireCameraStream, stopCamera]);
 
   // Real-time Video frame processing loop
   useEffect(() => {

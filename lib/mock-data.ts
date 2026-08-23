@@ -193,7 +193,7 @@ export function generateInitialResults(exam: ExamConfig, students: Student[]): S
       totalWrong: wrongCount,
       totalBlank: blankCount,
       isPassed,
-      scannedAt: new Date(Date.now() - (idx * 60000 + Math.random() * 100000)).toISOString(),
+      scannedAt: new Date(1758184200000 - idx * 60000).toISOString(),
       scanSource: idx % 2 === 0 ? 'ADF_KYOCERA' : 'CAMERA_REALTIME',
       status: 'VERIFIED',
       confidenceScore: 0.96
