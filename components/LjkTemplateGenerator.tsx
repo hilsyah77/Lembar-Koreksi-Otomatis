@@ -239,7 +239,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         @media print {
           @page {
             size: ${isLandscapeDivided ? 'A4 landscape' : 'A4 portrait'};
-            margin: ${isLandscapeDivided ? '5mm 5mm 5mm 5mm' : '8mm 8mm 8mm 8mm'} !important;
+            margin: ${isLandscapeDivided ? '5mm 4.25mm 5mm 4.25mm' : '8mm 8mm 8mm 8mm'} !important;
           }
           html, body {
             background-color: #ffffff !important;
@@ -261,10 +261,10 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           #printable-ljk-container {
             position: fixed !important;
             top: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            left: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            right: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
+            left: ${isLandscapeDivided ? '4.25mm' : '8mm'} !important;
+            right: ${isLandscapeDivided ? '4.25mm' : '8mm'} !important;
             bottom: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            width: calc(${isLandscapeDivided ? '297mm - 10mm' : '210mm - 16mm'}) !important;
+            width: calc(${isLandscapeDivided ? '297mm - 8.5mm' : '210mm - 16mm'}) !important;
             height: calc(${isLandscapeDivided ? '210mm - 10mm' : '297mm - 16mm'}) !important;
             max-height: 100vh !important;
             margin: 0 !important;
@@ -294,11 +294,11 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               </h2>
               <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                Margin 0.5 cm Presisi
+                Presisi 140 mm Kiri & Kanan
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              1 lembar kertas A4 Landscape (210 x 297 mm) full margin kiri 0.5 cm dan kanan 0.5 cm, dibagi 2 simetris untuk 2 siswa.
+              Kertas A4 Landscape (210 x 297 mm) presisi: LJK Kiri 140 mm, LJK Kanan 140 mm, dan garis potong tengah di posisi simetris sesuai standar printer.
             </p>
           </div>
         </div>
@@ -506,26 +506,41 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             </div>
 
             {/* Simulated Paper Container */}
-            <div className="overflow-x-auto select-none print:m-0 print:p-0 print:border-none print:bg-white print:overflow-visible flex justify-center bg-slate-100 p-3 sm:p-5 rounded-xl border border-slate-200">
-              {isLandscapeDivided ? (
-                /* LANDSCAPE A4 DIVIDED BY 2 (Side-by-side) */
-                <div 
-                  id="printable-ljk-container" 
-                  className="w-full max-w-[840px] bg-white p-3.5 sm:p-4 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-2 relative items-stretch"
-                  style={{
-                    aspectRatio: '297 / 210'
-                  }}
-                >
-                  {/* Left Half: LJK Siswa 1 */}
-                  {renderSingleLjkHalf(1)}
-
-                  {/* Vertical Center Cut-Line Guide (Clean Minimalist Dashed Divider) */}
-                  <div className="w-0 border-r border-dashed border-slate-300 print:border-black self-stretch my-2 shrink-0" />
-
-                  {/* Right Half: LJK Siswa 2 */}
-                  {renderSingleLjkHalf(2)}
+            <div className="flex flex-col gap-2 print:m-0 print:p-0 print:border-none print:bg-white">
+              {isLandscapeDivided && (
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 px-2 print:hidden">
+                  <span className="bg-slate-200/80 px-2.5 py-0.5 rounded-md font-semibold text-slate-700">
+                    ◀ LJK 1: 140 mm ▶
+                  </span>
+                  <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-md font-bold text-[10px]">
+                    ✂ Titik Tengah Presisi (148.5 mm)
+                  </span>
+                  <span className="bg-slate-200/80 px-2.5 py-0.5 rounded-md font-semibold text-slate-700">
+                    ◀ LJK 2: 140 mm ▶
+                  </span>
                 </div>
-              ) : (
+              )}
+
+              <div className="overflow-x-auto select-none print:m-0 print:p-0 print:border-none print:bg-white print:overflow-visible flex justify-center bg-slate-100 p-3 sm:p-5 rounded-xl border border-slate-200">
+                {isLandscapeDivided ? (
+                  /* LANDSCAPE A4 DIVIDED BY 2 (Side-by-side: 140mm Left + 140mm Right centered on 297x210mm) */
+                  <div 
+                    id="printable-ljk-container" 
+                    className="w-full max-w-[840px] bg-white p-3.5 sm:p-4 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-2 relative items-stretch"
+                    style={{
+                      aspectRatio: '297 / 210'
+                    }}
+                  >
+                    {/* Left Half: LJK Siswa 1 (140 mm) */}
+                    {renderSingleLjkHalf(1)}
+
+                    {/* Vertical Center Cut-Line Guide (Clean Minimalist Dashed Divider at 148.5mm) */}
+                    <div className="w-0 border-r border-dashed border-slate-300 print:border-black self-stretch my-2 shrink-0" />
+
+                    {/* Right Half: LJK Siswa 2 (140 mm) */}
+                    {renderSingleLjkHalf(2)}
+                  </div>
+                ) : (
                 /* FULL A4 PORTRAIT SHEET */
                 <div 
                   id="printable-ljk-container" 
@@ -692,5 +707,6 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };

@@ -430,23 +430,20 @@ export function generatePrintableLjkA4DividedBy2(
     doc.line(marginLeft, halfHeight, pageWidth - marginRight, halfHeight);
     doc.setLineDashPattern([], 0);
   } else {
-    // LANDSCAPE: Left (X: 0..148.5) and Right (X: 148.5..297)
+    // LANDSCAPE: Left (140 mm) and Right (140 mm) centered on A4 Landscape (297 x 210 mm)
     // Paper size: 297mm width x 210mm height
-    // Strict Left Margin: 5.0mm (0.5 cm)
-    // Strict Right Margin: 5.0mm (0.5 cm)
-    // Strict Top & Bottom Margin: 5.0mm (0.5 cm)
-    const marginX = 5.0; // 0.5 cm
-    const marginY = 5.0; // 0.5 cm
-    const halfWidth = pageWidth / 2; // 148.5mm
-    const centerGap = 2.0; // 2mm gap on either side of center cut line
-
-    // Left Half: startX = 5.0mm, sheetW = 148.5 - 2.0 - 5.0 = 141.5mm
-    // Right Half: startX = 148.5 + 2.0 = 150.5mm, sheetW = 297 - 5.0 - 150.5 = 141.5mm (ends at 292.0mm, leaving exactly 5.0mm right margin)
-    const sheetW = (pageWidth - marginX * 2 - centerGap * 2) / 2; // exactly 141.5mm per student
-    const sheetH = pageHeight - marginY * 2; // exactly 200.0mm (210 - 5 - 5)
+    // Exactly 140 mm for Left LJK & 140 mm for Right LJK
+    // Half A4 width = 148.5 mm
+    // Centered per half sheet: marginX = (148.5 - 140.0) / 2 = 4.25 mm (0.425 cm)
+    // Vertical margin: marginY = 5.0 mm (0.5 cm) -> Height = 200.0 mm
+    const sheetW = 140.0; // Exact 140 mm
+    const marginY = 5.0; // 5 mm (0.5 cm)
+    const sheetH = pageHeight - marginY * 2; // 200 mm
+    const halfWidth = pageWidth / 2; // 148.5 mm
+    const halfMargin = (halfWidth - sheetW) / 2; // 4.25 mm
 
     [0, 1].forEach((sheetIndex) => {
-      const startX = sheetIndex === 0 ? marginX : halfWidth + centerGap;
+      const startX = sheetIndex === 0 ? halfMargin : halfWidth + halfMargin;
       const startY = marginY;
 
       // 1. Fiducial Corner Markers for scanner auto-calibration (precise 4 corners)
@@ -488,7 +485,7 @@ export function generatePrintableLjkA4DividedBy2(
       // 4. Identitas Siswa Box (Left: NISN 10-Digit Matrix, Right: Nama, Paket, TTD)
       const idStartY = petunjukY + 7.5;
       const idBoxH = 63;
-      const idBoxW = sheetW - 6; // 135.5mm
+      const idBoxW = sheetW - 6; // 134.0mm
 
       doc.setDrawColor(60, 60, 60);
       doc.setLineWidth(0.2);
@@ -504,7 +501,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('(Tuliskan nama lengkap peserta dengan huruf kapital)', startX + 25, idStartY + 4.0);
 
       // Left Column inside ID box: NISN 10 Digit Matrix
-      const nisnBoxW = 77;
+      const nisnBoxW = 75;
       const nisnStartY = idStartY + 6.8;
       
       doc.setFont('helvetica', 'bold');
@@ -513,20 +510,20 @@ export function generatePrintableLjkA4DividedBy2(
 
       const digitStartX = startX + 5.5;
       const digitStartY = nisnStartY + 4.5;
-      const colSpacing = 6.9;
+      const colSpacing = 6.7;
       const rowSpacing = 3.4;
 
       for (let c = 0; c < 10; c++) {
         const cx = digitStartX + c * colSpacing;
-        doc.rect(cx - 1.2, digitStartY, 5.2, 3.2); // input box
+        doc.rect(cx - 1.2, digitStartY, 5.0, 3.2); // input box
         
         for (let r = 0; r <= 9; r++) {
           const cy = digitStartY + 5.0 + r * rowSpacing;
           doc.setDrawColor(60, 60, 60);
-          doc.circle(cx + 1.4, cy, 1.2);
+          doc.circle(cx + 1.3, cy, 1.2);
           doc.setFontSize(4.5);
           doc.setFont('helvetica', 'normal');
-          doc.text(r.toString(), cx + 1.4, cy + 0.6, { align: 'center' });
+          doc.text(r.toString(), cx + 1.3, cy + 0.6, { align: 'center' });
         }
       }
 
@@ -541,12 +538,12 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('PAKET SOAL', rightColX + rightColW / 2, nisnStartY + 3.2, { align: 'center' });
 
       ['A', 'B', 'C', 'D'].forEach((pkt, pIdx) => {
-        const px = rightColX + 3.5 + pIdx * (rightColW / 4);
+        const px = rightColX + 3.2 + pIdx * (rightColW / 4);
         const py = nisnStartY + 8.5;
-        doc.circle(px + 3, py, 1.4);
+        doc.circle(px + 2.8, py, 1.4);
         doc.setFontSize(5);
         doc.setFont('helvetica', 'bold');
-        doc.text(pkt, px + 3, py + 0.7, { align: 'center' });
+        doc.text(pkt, px + 2.8, py + 0.7, { align: 'center' });
       });
 
       // Ruang & Tanggal Box
@@ -588,7 +585,7 @@ export function generatePrintableLjkA4DividedBy2(
       const qPerCol = Math.ceil(totalQ / numCols);
       const colWidth = (idBoxW - 4) / numCols;
       const rowSpacingAns = Math.min(5.0, (ansBoxH - 6.5) / qPerCol);
-      const bubbleSpacing = exam.optionsCount === 4 ? 5.0 : 4.2;
+      const bubbleSpacing = exam.optionsCount === 4 ? 4.9 : 4.1;
 
       for (let q = 1; q <= totalQ; q++) {
         const colIdx = Math.floor((q - 1) / qPerCol);
@@ -619,12 +616,12 @@ export function generatePrintableLjkA4DividedBy2(
       // Footer Info
       doc.setFontSize(4.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`[LJK-A4-LANDSCAPE-BAGI-2 • SISWA ${sheetIndex + 1} • ID: ${exam.id}] Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
+      doc.text(`[LJK-A4-LANDSCAPE • 140mm • SISWA ${sheetIndex + 1} • ID: ${exam.id}] Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
       doc.setFont('helvetica', 'bold');
       doc.text('KEMENAG / DISDIK', startX + sheetW - 4, startY + sheetH - 1.5, { align: 'right' });
     });
 
-    // Vertical Center Cut Line (Garis Potong Tengah Bersih Tanpa Ikon Gunting)
+    // Vertical Center Cut Line (Garis Potong Tengah Presisi di X = 148.5 mm)
     doc.setDrawColor(160, 160, 160);
     doc.setLineWidth(0.2);
     doc.setLineDashPattern([2, 2], 0);
