@@ -243,7 +243,7 @@ export function generatePrintableLjkA4DividedBy2(
   exam: ExamConfig,
   teacher: TeacherProfile,
   orientation: 'portrait' | 'landscape' = 'landscape',
-  marginMm: number = 8
+  marginMm: number = 5
 ): void {
   const isPortrait = orientation === 'portrait';
 
@@ -431,17 +431,25 @@ export function generatePrintableLjkA4DividedBy2(
     doc.setLineDashPattern([], 0);
   } else {
     // LANDSCAPE: Left (X: 0..148.5) and Right (X: 148.5..297)
-    const halfWidth = pageWidth / 2; // 148.5mm per LJK
-    const marginX = marginMm; // 8mm
-    const marginY = 7; // 7mm
+    // Paper size: 297mm width x 210mm height
+    // Strict Left Margin: 5.0mm (0.5 cm)
+    // Strict Right Margin: 5.0mm (0.5 cm)
+    // Strict Top & Bottom Margin: 5.0mm (0.5 cm)
+    const marginX = 5.0; // 0.5 cm
+    const marginY = 5.0; // 0.5 cm
+    const halfWidth = pageWidth / 2; // 148.5mm
+    const centerGap = 2.0; // 2mm gap on either side of center cut line
 
-    [0, halfWidth].forEach((offsetX, sheetIndex) => {
-      const startX = offsetX + marginX;
+    // Left Half: startX = 5.0mm, sheetW = 148.5 - 2.0 - 5.0 = 141.5mm
+    // Right Half: startX = 148.5 + 2.0 = 150.5mm, sheetW = 297 - 5.0 - 150.5 = 141.5mm (ends at 292.0mm, leaving exactly 5.0mm right margin)
+    const sheetW = (pageWidth - marginX * 2 - centerGap * 2) / 2; // exactly 141.5mm per student
+    const sheetH = pageHeight - marginY * 2; // exactly 200.0mm (210 - 5 - 5)
+
+    [0, 1].forEach((sheetIndex) => {
+      const startX = sheetIndex === 0 ? marginX : halfWidth + centerGap;
       const startY = marginY;
-      const sheetW = halfWidth - marginX * 2; // ~132.5mm
-      const sheetH = pageHeight - marginY * 2; // ~196mm
 
-      // 1. Fiducial Corner Markers for scanner auto-calibration
+      // 1. Fiducial Corner Markers for scanner auto-calibration (precise 4 corners)
       const markerSize = 3.8;
       doc.setFillColor(0, 0, 0);
       doc.rect(startX, startY, markerSize, markerSize, 'F'); // Top-Left
@@ -479,8 +487,8 @@ export function generatePrintableLjkA4DividedBy2(
 
       // 4. Identitas Siswa Box (Left: NISN 10-Digit Matrix, Right: Nama, Paket, TTD)
       const idStartY = petunjukY + 7.5;
-      const idBoxH = 62;
-      const idBoxW = sheetW - 6;
+      const idBoxH = 63;
+      const idBoxW = sheetW - 6; // 135.5mm
 
       doc.setDrawColor(60, 60, 60);
       doc.setLineWidth(0.2);
@@ -496,7 +504,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('(Tuliskan nama lengkap peserta dengan huruf kapital)', startX + 25, idStartY + 4.0);
 
       // Left Column inside ID box: NISN 10 Digit Matrix
-      const nisnBoxW = 76;
+      const nisnBoxW = 77;
       const nisnStartY = idStartY + 6.8;
       
       doc.setFont('helvetica', 'bold');
@@ -505,7 +513,7 @@ export function generatePrintableLjkA4DividedBy2(
 
       const digitStartX = startX + 5.5;
       const digitStartY = nisnStartY + 4.5;
-      const colSpacing = 6.8;
+      const colSpacing = 6.9;
       const rowSpacing = 3.4;
 
       for (let c = 0; c < 10; c++) {
@@ -523,8 +531,8 @@ export function generatePrintableLjkA4DividedBy2(
       }
 
       // Right Column inside ID box: Paket Soal, Ruang & Tanda Tangan
-      const rightColX = startX + 3 + nisnBoxW + 4;
-      const rightColW = idBoxW - nisnBoxW - 6;
+      const rightColX = startX + 3 + nisnBoxW + 3;
+      const rightColW = idBoxW - nisnBoxW - 5;
 
       // Paket Soal Box
       doc.rect(rightColX, nisnStartY, rightColW, 14);
@@ -533,7 +541,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('PAKET SOAL', rightColX + rightColW / 2, nisnStartY + 3.2, { align: 'center' });
 
       ['A', 'B', 'C', 'D'].forEach((pkt, pIdx) => {
-        const px = rightColX + 4 + pIdx * (rightColW / 4);
+        const px = rightColX + 3.5 + pIdx * (rightColW / 4);
         const py = nisnStartY + 8.5;
         doc.circle(px + 3, py, 1.4);
         doc.setFontSize(5);
@@ -579,8 +587,8 @@ export function generatePrintableLjkA4DividedBy2(
       const numCols = totalQ <= 25 ? 2 : totalQ <= 40 ? 3 : 4;
       const qPerCol = Math.ceil(totalQ / numCols);
       const colWidth = (idBoxW - 4) / numCols;
-      const rowSpacingAns = Math.min(4.8, (ansBoxH - 6.5) / qPerCol);
-      const bubbleSpacing = exam.optionsCount === 4 ? 4.8 : 4.0;
+      const rowSpacingAns = Math.min(5.0, (ansBoxH - 6.5) / qPerCol);
+      const bubbleSpacing = exam.optionsCount === 4 ? 5.0 : 4.2;
 
       for (let q = 1; q <= totalQ; q++) {
         const colIdx = Math.floor((q - 1) / qPerCol);

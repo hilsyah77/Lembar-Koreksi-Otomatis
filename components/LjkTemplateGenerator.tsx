@@ -46,13 +46,13 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         { ...exam, totalQuestions: totalQ, optionsCount: optCount },
         teacher,
         'landscape',
-        8
+        5
       );
     } else {
       generatePrintableLjkFullA4(
         { ...exam, totalQuestions: totalQ, optionsCount: optCount },
         teacher,
-        10
+        8
       );
     }
   };
@@ -239,7 +239,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         @media print {
           @page {
             size: ${isLandscapeDivided ? 'A4 landscape' : 'A4 portrait'};
-            margin: ${isLandscapeDivided ? '5mm 6mm 5mm 6mm' : '8mm 8mm 8mm 8mm'} !important;
+            margin: ${isLandscapeDivided ? '5mm 5mm 5mm 5mm' : '8mm 8mm 8mm 8mm'} !important;
           }
           html, body {
             background-color: #ffffff !important;
@@ -261,10 +261,10 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           #printable-ljk-container {
             position: fixed !important;
             top: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            left: ${isLandscapeDivided ? '6mm' : '8mm'} !important;
-            right: ${isLandscapeDivided ? '6mm' : '8mm'} !important;
+            left: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
+            right: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
             bottom: ${isLandscapeDivided ? '5mm' : '8mm'} !important;
-            width: calc(${isLandscapeDivided ? '297mm - 12mm' : '210mm - 16mm'}) !important;
+            width: calc(${isLandscapeDivided ? '297mm - 10mm' : '210mm - 16mm'}) !important;
             height: calc(${isLandscapeDivided ? '210mm - 10mm' : '297mm - 16mm'}) !important;
             max-height: 100vh !important;
             margin: 0 !important;
@@ -294,11 +294,11 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               </h2>
               <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                Hemat Kertas 50%
+                Margin 0.5 cm Presisi
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              1 lembar kertas A4 posisi horizontal (landscape) dibagi 2 untuk 2 siswa dengan margin kiri-kanan presisi dan garis potong tengah bersih.
+              1 lembar kertas A4 Landscape (210 x 297 mm) full margin kiri 0.5 cm dan kanan 0.5 cm, dibagi 2 simetris untuk 2 siswa.
             </p>
           </div>
         </div>
