@@ -9,8 +9,6 @@ import {
   CheckCircle2, 
   FileCheck2,
   Sliders,
-  Scissors,
-  CheckCircle,
   Layers
 } from 'lucide-react';
 import { ExamConfig, TeacherProfile } from '@/types/omr';
@@ -82,7 +80,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       <div className="absolute bottom-1.5 right-1.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-black" />
 
       {/* 1. Official Header */}
-      <div className="text-center px-3 pt-0.5">
+      <div className="text-center px-2 pt-0.5">
         <div className="font-black text-xs uppercase tracking-tight text-slate-900 print:text-black leading-tight line-clamp-1">
           {teacher.namaSekolah}
         </div>
@@ -97,7 +95,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 2. Petunjuk Pengisian Singkat */}
-      <div className="bg-slate-50 border border-slate-400 print:border-black rounded-sm p-1.5 text-[8.5px] flex items-center justify-between gap-1.5 mx-0.5">
+      <div className="bg-slate-50 border border-slate-400 print:border-black rounded-sm p-1.5 text-[8.5px] flex items-center justify-between gap-1.5 w-full">
         <div className="space-y-0.5">
           <span className="font-bold text-slate-900 print:text-black">PETUNJUK:</span>
           <p className="text-slate-700 print:text-black leading-tight">
@@ -117,7 +115,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 3. Identitas Siswa & NISN Matrix Box */}
-      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white mx-0.5 my-1.5 space-y-1.5">
+      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white w-full my-1.5 space-y-1.5">
         {/* Nama Peserta */}
         <div className="flex items-center gap-1.5">
           <span className="font-bold text-[9px] text-slate-900 print:text-black shrink-0">NAMA PESERTA :</span>
@@ -186,7 +184,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 4. Multiple Choice Answer Grid (1 - N) */}
-      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white mx-0.5 my-1 flex-1 flex flex-col justify-between">
+      <div className="border border-slate-700 print:border-black rounded-sm p-2 bg-white w-full my-1 flex-1 flex flex-col justify-between">
         <div className="text-center font-bold text-[9px] text-slate-900 print:text-black pb-1 border-b border-slate-300 print:border-black mb-1.5 bg-slate-100 print:bg-transparent py-0.5 rounded-xs">
           LEMBAR JAWABAN PILIHAN GANDA (NOMOR 1 s.d {totalQ})
         </div>
@@ -227,7 +225,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       </div>
 
       {/* 5. Footer Calibration & Metadata */}
-      <div className="flex items-center justify-between text-[7.5px] text-slate-600 print:text-black font-medium px-1 pt-1 border-t border-slate-300 print:border-black">
+      <div className="flex items-center justify-between text-[7.5px] text-slate-600 print:text-black font-medium px-1 pt-1 border-t border-slate-300 print:border-black w-full">
         <span>[LJK-A4-LANDSCAPE • SISWA {studentNo} • ID: {exam.id}] Kyocera M2535dn</span>
         <span className="font-bold">KEMENAG / DISDIK</span>
       </div>
@@ -287,7 +285,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs">
-            <Scissors className="w-6 h-6" />
+            <Layers className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
@@ -300,7 +298,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              1 lembar kertas A4 posisi horizontal (landscape) dibagi 2 untuk 2 siswa. Dilengkapi garis potong tengah dan terkalibrasi scanner/kamera.
+              1 lembar kertas A4 posisi horizontal (landscape) dibagi 2 untuk 2 siswa dengan margin kiri-kanan presisi dan garis potong tengah bersih.
             </p>
           </div>
         </div>
@@ -513,7 +511,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                 /* LANDSCAPE A4 DIVIDED BY 2 (Side-by-side) */
                 <div 
                   id="printable-ljk-container" 
-                  className="w-full max-w-[840px] bg-white p-3 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-2 relative"
+                  className="w-full max-w-[840px] bg-white p-3.5 sm:p-4 print:p-0 rounded-lg shadow-sm print:shadow-none border border-slate-300 print:border-none text-slate-900 print:text-black flex flex-row gap-3 print:gap-2 relative items-stretch"
                   style={{
                     aspectRatio: '297 / 210'
                   }}
@@ -521,18 +519,8 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                   {/* Left Half: LJK Siswa 1 */}
                   {renderSingleLjkHalf(1)}
 
-                  {/* Vertical Center Cut-Line Guide */}
-                  <div className="relative flex flex-col justify-center items-center px-1 shrink-0">
-                    <div className="w-0 h-full border-r-2 border-dashed border-slate-400 print:border-black flex flex-col justify-center items-center relative">
-                      <div className="bg-white px-1.5 py-1 border border-slate-300 print:border-black rounded-md text-[8px] font-bold text-slate-600 print:text-black flex flex-col items-center gap-1 shadow-xs z-10">
-                        <Scissors className="w-3.5 h-3.5 text-rose-500 print:text-black" />
-                        <span className="rotate-[-90deg] whitespace-nowrap my-4 text-[7px] tracking-wider">
-                          POTONG TENGAH
-                        </span>
-                        <Scissors className="w-3.5 h-3.5 text-rose-500 print:text-black" />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Vertical Center Cut-Line Guide (Clean Minimalist Dashed Divider) */}
+                  <div className="w-0 border-r border-dashed border-slate-300 print:border-black self-stretch my-2 shrink-0" />
 
                   {/* Right Half: LJK Siswa 2 */}
                   {renderSingleLjkHalf(2)}

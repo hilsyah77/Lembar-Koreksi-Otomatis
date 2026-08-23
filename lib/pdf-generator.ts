@@ -423,13 +423,12 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text(`[LJK-A4-BAGI-2 • SISWA ${sheetIndex + 1}] Scan via Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
     });
 
-    // Horizontal Center Cut-Line
-    doc.setDrawColor(120, 120, 120);
-    doc.setLineDashPattern([2, 1.5], 0);
+    // Horizontal Center Cut-Line (Garis Potong Tengah Bersih)
+    doc.setDrawColor(160, 160, 160);
+    doc.setLineWidth(0.2);
+    doc.setLineDashPattern([2, 2], 0);
     doc.line(marginLeft, halfHeight, pageWidth - marginRight, halfHeight);
-    doc.setFontSize(5.5);
-    doc.setTextColor(100, 100, 100);
-    doc.text('✂  --- GARIS POTONG TENGAH (A4 DIBAGI 2 / FORMAT A5 PER SISWA) ---  ✂', (marginLeft + (pageWidth - marginRight)) / 2, halfHeight - 1, { align: 'center' });
+    doc.setLineDashPattern([], 0);
   } else {
     // LANDSCAPE: Left (X: 0..148.5) and Right (X: 148.5..297)
     const halfWidth = pageWidth / 2; // 148.5mm per LJK
@@ -617,13 +616,12 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('KEMENAG / DISDIK', startX + sheetW - 4, startY + sheetH - 1.5, { align: 'right' });
     });
 
-    // Vertical Center Cut Line (Potong Tengah)
-    doc.setDrawColor(120, 120, 120);
-    doc.setLineDashPattern([2, 1.5], 0);
-    doc.line(halfWidth, 4, halfWidth, pageHeight - 4);
-    doc.setFontSize(5.5);
-    doc.setTextColor(100, 100, 100);
-    doc.text('✂  --- GARIS POTONG TENGAH (A4 DIBAGI 2 / 2 SISWA PER LEMBAR) ---  ✂', halfWidth, 5, { align: 'center', angle: 90 });
+    // Vertical Center Cut Line (Garis Potong Tengah Bersih Tanpa Ikon Gunting)
+    doc.setDrawColor(160, 160, 160);
+    doc.setLineWidth(0.2);
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(halfWidth, marginY, halfWidth, pageHeight - marginY);
+    doc.setLineDashPattern([], 0);
   }
 
   const orientationLabel = isPortrait ? 'Portrait' : 'Landscape';
