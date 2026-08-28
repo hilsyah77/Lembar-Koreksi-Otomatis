@@ -48,8 +48,6 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
   const [newNo, setNewNo] = useState<string>('');
   const [newName, setNewName] = useState<string>('');
   const [newClass, setNewClass] = useState<string>('IX E');
-  const [isCustomClass, setIsCustomClass] = useState<boolean>(false);
-  const [customClassInput, setCustomClassInput] = useState<string>('');
 
   // Inline Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,7 +95,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
     e.preventDefault();
     if (!newNo.trim() || !newName.trim()) return;
 
-    const classToAssign = isCustomClass ? (customClassInput.trim() || 'IX E') : newClass;
+    const classToAssign = newClass.trim() || 'IX E';
     const cleanNo = newNo.replace(/\D/g, ''); // keep numbers only
     const formattedNo = cleanNo.length > 0 ? cleanNo.padStart(10, '0').slice(-10) : newNo.trim();
 
@@ -111,11 +109,6 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
     setList(prev => [newStd, ...prev]);
     setNewNo('');
     setNewName('');
-    if (isCustomClass && customClassInput.trim()) {
-      setNewClass(customClassInput.trim());
-      setIsCustomClass(false);
-      setCustomClassInput('');
-    }
   };
 
   const startEdit = (std: Student) => {
@@ -515,7 +508,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                 </div>
 
                 {/* Name Input */}
-                <div className="sm:col-span-5">
+                <div className="sm:col-span-4">
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     Nama Lengkap Siswa
                   </label>
@@ -529,48 +522,19 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                   />
                 </div>
 
-                {/* Class Input / Select */}
-                <div className="sm:col-span-2">
+                {/* Class Input (Form Isian Langsung) */}
+                <div className="sm:col-span-3">
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Kelas
+                    Kelas / Rombel
                   </label>
-                  {!isCustomClass ? (
-                    <select
-                      value={newClass}
-                      onChange={(e) => {
-                        if (e.target.value === '__NEW__') {
-                          setIsCustomClass(true);
-                        } else {
-                          setNewClass(e.target.value);
-                        }
-                      }}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-slate-800 font-semibold focus:outline-none focus:border-purple-500 shadow-xs"
-                    >
-                      {uniqueClasses.map(cls => (
-                        <option key={cls} value={cls}>{cls}</option>
-                      ))}
-                      <option value="__NEW__">+ Buat Kelas Baru...</option>
-                    </select>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="text"
-                        placeholder="Nama Kelas"
-                        value={customClassInput}
-                        onChange={(e) => setCustomClassInput(e.target.value)}
-                        className="w-full bg-white border border-purple-400 rounded-xl px-2 py-2 text-slate-800 font-semibold focus:outline-none text-xs"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomClass(false)}
-                        className="p-1 text-slate-400 hover:text-slate-700"
-                        title="Batal custom kelas"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
+                  <input
+                    type="text"
+                    placeholder="Contoh: IX E / 9A"
+                    value={newClass}
+                    onChange={(e) => setNewClass(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:border-purple-500 shadow-xs"
+                    required
+                  />
                 </div>
 
                 {/* Submit Button */}
