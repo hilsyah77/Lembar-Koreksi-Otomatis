@@ -7,7 +7,7 @@ import {
   RotateCcw, 
   Sparkles, 
   CheckCircle2, 
-  UploadCloud, 
+  Upload, 
   Volume2, 
   Zap, 
   HelpCircle,
@@ -459,7 +459,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               </button>
 
               <label className="cursor-pointer px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-200 transition-colors shadow-xs">
-                <UploadCloud className="w-4 h-4 text-sky-600" />
+                <Upload className="w-4 h-4 text-blue-600" />
                 Upload Foto LJK
                 <input
                   type="file"

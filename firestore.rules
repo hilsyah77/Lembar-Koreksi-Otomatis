@@ -1,24 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function
-    function isValidExam(data) {
-      return data.title is string && data.subject is string;
-    }
-
+    // Allow read/write for exam configs, student rosters, scan results, and meta settings
     match /exams/{examId} {
       allow read, write: if true;
     }
-
     match /students/{studentId} {
       allow read, write: if true;
     }
-
-    match /scanResults/{resultId} {
+    match /scan_results/{resultId} {
       allow read, write: if true;
     }
-
-    match /settings/{settingId} {
+    match /app_meta/{metaId} {
       allow read, write: if true;
     }
   }

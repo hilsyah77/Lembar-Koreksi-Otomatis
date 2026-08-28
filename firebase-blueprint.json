@@ -1,115 +1,81 @@
 {
-  "$schema": "https://firebase.google.com/docs/firestore/blueprint.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LJK Pro Scanner Firestore Schema",
+  "description": "Schema definitions for exams, students, scan results, and configuration data.",
   "entities": {
     "exams": {
-      "title": "Exam Configurations",
-      "description": "Master configurations for exams, answer keys, packet keys, and scoring parameters",
       "type": "object",
+      "description": "Exam configurations with answer keys and weights",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string" },
         "subject": { "type": "string" },
         "gradeClass": { "type": "string" },
-        "date": { "type": "string" },
+        "teacherName": { "type": "string" },
         "totalQuestions": { "type": "number" },
         "optionsCount": { "type": "number" },
-        "packets": { "type": "array" },
-        "questionWeights": { "type": "object" },
-        "penaltyNegativeScore": { "type": "number" },
-        "kkm": { "type": "number" },
+        "passingScore": { "type": "number" },
+        "answerKey": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
-      "required": ["id", "title", "subject", "totalQuestions", "packets", "kkm"]
+      "required": ["id", "title", "totalQuestions", "answerKey"]
     },
     "students": {
-      "title": "Student Roster",
-      "description": "Student master records containing ID, NISN, name, and class",
       "type": "object",
+      "description": "Registered students roster",
       "properties": {
         "id": { "type": "string" },
-        "studentNo": { "type": "string" },
         "name": { "type": "string" },
-        "classId": { "type": "string" },
-        "gender": { "type": "string" }
+        "studentNo": { "type": "string" },
+        "gradeClass": { "type": "string" },
+        "createdAt": { "type": "string" }
       },
-      "required": ["id", "studentNo", "name", "classId"]
+      "required": ["id", "name", "studentNo"]
     },
-    "scanResults": {
-      "title": "OMR Scan & Evaluation Results",
-      "description": "Records of processed LJK sheets with scores, detected answers, and status",
+    "scan_results": {
       "type": "object",
+      "description": "Exam grading results scanned via OMR Camera or ADF Scanner",
       "properties": {
         "id": { "type": "string" },
         "examId": { "type": "string" },
+        "examTitle": { "type": "string" },
         "studentNo": { "type": "string" },
         "studentName": { "type": "string" },
-        "classId": { "type": "string" },
-        "packetCode": { "type": "string" },
-        "rawScore": { "type": "number" },
-        "finalScore": { "type": "number" },
-        "correctCount": { "type": "number" },
-        "incorrectCount": { "type": "number" },
-        "unansweredCount": { "type": "number" },
+        "score": { "type": "number" },
+        "rawCorrect": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "percentage": { "type": "number" },
         "isPassed": { "type": "boolean" },
-        "status": { "type": "string" },
-        "answers": { "type": "object" },
-        "scannedAt": { "type": "string" }
+        "answers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "itemCorrectness": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        },
+        "processedAt": { "type": "string" },
+        "source": { "type": "string" }
       },
-      "required": ["id", "examId", "studentNo", "finalScore", "status", "answers"]
+      "required": ["id", "examId", "studentNo", "score"]
     },
-    "teacherProfile": {
-      "title": "Teacher Profile",
-      "description": "Teacher credentials and school metadata",
+    "app_meta": {
       "type": "object",
+      "description": "Global teacher profile and scanner device configuration",
       "properties": {
-        "namaGuru": { "type": "string" },
-        "nip": { "type": "string" },
-        "namaSekolah": { "type": "string" },
-        "mataPelajaran": { "type": "string" },
-        "tingkatKelas": { "type": "string" },
-        "semester": { "type": "string" },
-        "tahunAjaran": { "type": "string" },
-        "kkmDefault": { "type": "number" },
-        "kontakEmail": { "type": "string" },
-        "tandaTanganNama": { "type": "string" }
-      },
-      "required": ["namaGuru", "namaSekolah", "mataPelajaran", "tahunAjaran"]
-    },
-    "kyoceraConfig": {
-      "title": "Kyocera Scanner Settings",
-      "description": "Network and ADF scanner configuration",
-      "type": "object",
-      "properties": {
-        "printerModel": { "type": "string" },
-        "ipAddress": { "type": "string" },
-        "port": { "type": "number" },
-        "protocol": { "type": "string" },
-        "resolutionDpi": { "type": "number" },
-        "colorMode": { "type": "string" },
-        "duplexMode": { "type": "string" },
-        "autoSplitA4ToA5": { "type": "boolean" },
-        "enableAutoCorrect": { "type": "boolean" },
-        "pollingIntervalSeconds": { "type": "number" }
-      },
-      "required": ["ipAddress", "port"]
-    }
-  },
-  "firestore": {
-    "/exams/{examId}": {
-      "entity": "exams"
-    },
-    "/students/{studentId}": {
-      "entity": "students"
-    },
-    "/scanResults/{resultId}": {
-      "entity": "scanResults"
-    },
-    "/settings/teacherProfile": {
-      "entity": "teacherProfile"
-    },
-    "/settings/kyoceraConfig": {
-      "entity": "kyoceraConfig"
+        "id": { "type": "string" },
+        "teacher": { "type": "object" },
+        "kyocera": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      }
     }
   }
 }

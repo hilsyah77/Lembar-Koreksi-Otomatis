@@ -3,28 +3,34 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Cloud, 
-  Download, 
-  Upload, 
-  CheckCircle2, 
-  X, 
-  Database, 
-  Smartphone, 
-  Monitor, 
+  CloudUpload, 
+  CloudDownload, 
   RefreshCw, 
+  CheckCircle2, 
+  AlertCircle, 
+  Database, 
+  Layers, 
+  Users, 
+  Table, 
+  X,
+  Radio,
+  Clock,
   ShieldCheck,
-  HardDrive,
-  Trash2,
-  Server,
-  Radio
+  HardDrive
 } from 'lucide-react';
-import { AppState, exportBackupData, importBackupData } from '@/lib/storage';
-import { syncStateToFirestore, fetchStateFromFirestore } from '@/lib/firestore-service';
+import { 
+  checkFirestoreConnection, 
+  syncStateToFirestore, 
+  fetchStateFromFirestore, 
+  FIREBASE_PROJECT_INFO 
+} from '@/lib/firestore-service';
+import { AppState } from '@/lib/storage';
 
 interface CloudSyncModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentState: AppState;
-  onRestoreState: (restored: AppState) => void;
+  onRestoreState: (restoredState: AppState) => void;
   onOpenDatabaseManager?: () => void;
 }
 
@@ -35,240 +41,291 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   onRestoreState,
   onOpenDatabaseManager
 }) => {
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [isPulling, setIsPulling] = useState<boolean>(false);
-  const [syncSuccessMsg, setSyncSuccessMsg] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [connStatus, setConnStatus] = useState<{ connected: boolean; latencyMs: number; error?: string } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+
+  const performHealthCheck = async () => {
+    setIsChecking(true);
+    try {
+      const result = await checkFirestoreConnection();
+      setConnStatus(result);
+    } catch {
+      setConnStatus({ connected: false, latencyMs: 0, error: 'Koneksi ke Firestore gagal.' });
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (isOpen) {
+      const runCheck = async () => {
+        setIsChecking(true);
+        try {
+          const result = await checkFirestoreConnection();
+          if (!isCancelled) {
+            setConnStatus(result);
+            setStatusMessage(null);
+          }
+        } catch {
+          if (!isCancelled) {
+            setConnStatus({ connected: false, latencyMs: 0, error: 'Koneksi ke Firestore gagal.' });
+            setStatusMessage(null);
+          }
+        } finally {
+          if (!isCancelled) {
+            setIsChecking(false);
+          }
+        }
+      };
+
+      runCheck();
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleCloudSync = async () => {
+  const handleUploadToCloud = async () => {
     setIsSyncing(true);
-    setErrorMessage(null);
+    setStatusMessage({ type: 'info', text: 'Sedang mengunggah data ujian, siswa, dan hasil scan ke Cloud Firestore...' });
     try {
       await syncStateToFirestore(currentState);
-      setSyncSuccessMsg('Seluruh data ujian, daftar siswa, profil guru, & hasil koreksi LJK berhasil disimpan ke Firebase Firestore Database!');
-      setTimeout(() => setSyncSuccessMsg(null), 5000);
-    } catch (err: any) {
-      setErrorMessage('Gagal sinkronisasi ke Firebase: ' + (err.message || 'Koneksi error'));
+      setStatusMessage({ 
+        type: 'success', 
+        text: `Berhasil mencadangkan ${currentState.exams.length} Ujian, ${currentState.students.length} Siswa, dan ${currentState.results.length} Hasil Scan ke Cloud!` 
+      });
+      performHealthCheck();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatusMessage({ type: 'error', text: `Gagal mencadangkan data ke Cloud: ${msg}` });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handlePullFromFirestore = async () => {
-    setIsPulling(true);
-    setErrorMessage(null);
+  const handleDownloadFromCloud = async () => {
+    setIsRestoring(true);
+    setStatusMessage({ type: 'info', text: 'Mengambil salinan data terbaru dari Cloud Firestore...' });
     try {
-      const pulledState = await fetchStateFromFirestore();
-      if (!pulledState.exams && !pulledState.results && !pulledState.students) {
-        setErrorMessage('Database cloud masih kosong. Silakan klik "Upload ke Cloud Database" terlebih dahulu.');
+      const cloudData = await fetchStateFromFirestore();
+      if (!cloudData.exams || cloudData.exams.length === 0) {
+        setStatusMessage({ type: 'error', text: 'Database Cloud masih kosong atau belum pernah dicadangkan.' });
+        setIsRestoring(false);
         return;
       }
-      
-      const merged: AppState = {
-        teacher: pulledState.teacher || currentState.teacher,
-        kyocera: pulledState.kyocera || currentState.kyocera,
-        exams: (pulledState.exams && pulledState.exams.length > 0) ? pulledState.exams : currentState.exams,
-        students: (pulledState.students && pulledState.students.length > 0) ? pulledState.students : currentState.students,
-        results: pulledState.results || currentState.results,
-        activeExamId: pulledState.exams?.[0]?.id || currentState.activeExamId,
+
+      const mergedState: AppState = {
+        exams: cloudData.exams || currentState.exams,
+        activeExamId: cloudData.activeExamId || (cloudData.exams[0]?.id ?? currentState.activeExamId),
+        teacher: cloudData.teacher || currentState.teacher,
+        kyocera: cloudData.kyocera || currentState.kyocera,
+        students: cloudData.students || currentState.students,
+        results: cloudData.results || currentState.results,
         lastSyncedAt: new Date().toISOString()
       };
 
-      onRestoreState(merged);
-      setSyncSuccessMsg(`Data berhasil dimuat dari Firestore! (${merged.exams.length} Ujian, ${merged.students.length} Siswa, ${merged.results.length} Hasil Koreksi)`);
-      setTimeout(() => setSyncSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setErrorMessage('Gagal memuat dari Cloud Firestore: ' + (err.message || 'Koneksi error'));
+      onRestoreState(mergedState);
+      setStatusMessage({ 
+        type: 'success', 
+        text: `Sinkronisasi sukses! Berhasil memuat ${mergedState.exams.length} Ujian, ${mergedState.students.length} Siswa, dan ${mergedState.results.length} Hasil Scan dari Cloud.` 
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatusMessage({ type: 'error', text: `Gagal mengunduh dari Cloud: ${msg}` });
     } finally {
-      setIsPulling(false);
-    }
-  };
-
-  const handleExportBackup = () => {
-    try {
-      exportBackupData(currentState);
-      setSyncSuccessMsg('File backup data (JSON) berhasil diunduh ke perangkat.');
-      setTimeout(() => setSyncSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setErrorMessage('Gagal membuat file backup: ' + err.message);
-    }
-  };
-
-  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      try {
-        const file = e.target.files[0];
-        const data = await importBackupData(file);
-        onRestoreState(data);
-        setSyncSuccessMsg('Data berhasil dipulihkan dari file backup!');
-        setTimeout(() => {
-          setSyncSuccessMsg(null);
-          onClose();
-        }, 1500);
-      } catch (err: any) {
-        setErrorMessage('File backup tidak valid: ' + err.message);
-      }
+      setIsRestoring(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden text-slate-900 flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Modal Header */}
+        <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-600 shadow-xs">
-              <Cloud className="w-5 h-5" />
+            <div className="p-2 bg-white/15 rounded-xl backdrop-blur-xs">
+              <Cloud className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900">Sinkronisasi Cloud & Backup</h3>
-              <p className="text-xs text-slate-500 font-medium">Penyimpanan aman & aksesibilitas lintas perangkat</p>
+              <h2 className="text-base font-bold flex items-center gap-2">
+                Firebase Cloud Firestore
+                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-white/20 text-white">
+                  Aktif
+                </span>
+              </h2>
+              <p className="text-xs text-blue-100 font-medium">
+                Sinkronisasi & Cadangan Cloud Multi-Perangkat
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs">
-          {syncSuccessMsg && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-2 font-medium shadow-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{syncSuccessMsg}</span>
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl flex items-center gap-2 font-medium shadow-xs">
-              <X className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Cloud Sync Section */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4.5 space-y-3 shadow-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-sky-600" />
-                <span className="font-bold text-slate-900 text-sm">Firebase Cloud Firestore</span>
-              </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                Database Aktif
-              </span>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Simpan data master ujian, kunci jawaban, profil sekolah/guru, daftar siswa & NISN, serta seluruh hasil koreksi LJK secara persisten di Google Cloud Firestore.
-            </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
-              <button
-                onClick={handleCloudSync}
-                disabled={isSyncing || isPulling}
-                className="w-full sm:flex-1 py-2.5 px-4 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-sky-200 transition-all text-xs"
-              >
-                <Upload className={`w-3.5 h-3.5 ${isSyncing ? 'animate-bounce' : ''}`} />
-                {isSyncing ? 'Mengunggah ke Cloud...' : 'Simpan / Upload ke Firestore'}
-              </button>
-
-              <button
-                onClick={handlePullFromFirestore}
-                disabled={isSyncing || isPulling}
-                className="w-full sm:flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-slate-200 transition-all text-xs"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin' : ''}`} />
-                {isPulling ? 'Memuat Data...' : 'Muat Data dari Cloud'}
-              </button>
-            </div>
-          </div>
-
-          {/* Cross-Device Info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 shadow-xs">
-              <Monitor className="w-5 h-5 text-blue-600 shrink-0" />
-              <div>
-                <div className="font-bold text-slate-900">PC / Laptop Guru</div>
-                <div className="text-[10px] text-slate-500 font-medium">Koreksi ADF & Cetak</div>
-              </div>
-            </div>
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 shadow-xs">
-              <Smartphone className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div>
-                <div className="font-bold text-slate-900">Kamera HP / Tablet</div>
-                <div className="text-[10px] text-slate-500 font-medium">Scan Cepat di Kelas</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Offline Backup & Restore */}
-          <div className="border-t border-slate-100 pt-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <HardDrive className="w-4 h-4 text-indigo-600" />
-              <span className="font-bold text-slate-900 text-sm">Backup & Restore Offline (JSON)</span>
-            </div>
-            <p className="text-slate-600 font-medium">
-              Unduh salinan cadangan lengkap atau pulihkan data dari file JSON tersimpan tanpa memerlukan koneksi internet.
-            </p>
-
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-5">
+          {/* Cloud Connection Status Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleExportBackup}
-                className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-xs"
-              >
-                <Download className="w-4 h-4 text-emerald-600" />
-                Unduh Backup
-              </button>
+              <div className={`p-2.5 rounded-xl ${
+                connStatus?.connected 
+                  ? 'bg-emerald-100 text-emerald-700' 
+                  : connStatus === null 
+                    ? 'bg-slate-100 text-slate-500' 
+                    : 'bg-rose-100 text-rose-700'
+              }`}>
+                {connStatus?.connected ? (
+                  <Radio className="w-5 h-5 animate-pulse" />
+                ) : (
+                  <Cloud className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-800">
+                    {connStatus?.connected ? 'Terhubung ke Cloud Firestore' : isChecking ? 'Memeriksa Koneksi Cloud...' : 'Menghubungkan ke Cloud...'}
+                  </span>
+                  {connStatus?.connected && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {connStatus.latencyMs} ms
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                  Project: <span className="text-slate-700 font-semibold">{FIREBASE_PROJECT_INFO.projectId}</span>
+                </p>
+              </div>
+            </div>
 
-              <label className="flex-1 cursor-pointer py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors text-center shadow-xs">
-                <Upload className="w-4 h-4 text-amber-600" />
-                Pulihkan Backup
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImportBackup}
-                  className="hidden"
-                />
-              </label>
+            <button
+              onClick={performHealthCheck}
+              disabled={isChecking}
+              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-200/70 rounded-lg transition-colors"
+              title="Perbarui Status Koneksi"
+            >
+              <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
+          </div>
+
+          {/* Current Local Data Summary */}
+          <div>
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <HardDrive className="w-3.5 h-3.5 text-blue-600" />
+              Data Lokal Saat Ini
+            </h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                <div className="text-lg font-black text-slate-800">{currentState.exams.length}</div>
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-center gap-1 mt-0.5">
+                  <Layers className="w-3 h-3 text-blue-500" /> Paket Ujian
+                </div>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                <div className="text-lg font-black text-slate-800">{currentState.students.length}</div>
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-center gap-1 mt-0.5">
+                  <Users className="w-3 h-3 text-purple-500" /> Data Siswa
+                </div>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                <div className="text-lg font-black text-slate-800">{currentState.results.length}</div>
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-center gap-1 mt-0.5">
+                  <Table className="w-3 h-3 text-emerald-500" /> Lembar Nilai
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Database Purge / Reset Trigger */}
-          {onOpenDatabaseManager && (
-            <div className="border-t border-slate-100 pt-4">
-              <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 text-xs text-rose-900">
-                  <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
-                  <div>
-                    <div className="font-bold">Hapus / Bersihkan Database</div>
-                    <div className="text-[10.5px] text-rose-700 font-medium">Kosongkan hasil ujian atau reset sistem ke kondisi awal</div>
-                  </div>
+          {/* Sync Action Buttons */}
+          <div className="space-y-3 pt-1">
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              Opsi Sinkronisasi
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={handleUploadToCloud}
+                disabled={isSyncing || isRestoring}
+                className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/90 text-blue-800 flex items-center gap-3 text-left transition-all group shadow-2xs disabled:opacity-50"
+              >
+                <div className="p-2 rounded-lg bg-blue-600 text-white shrink-0 group-hover:scale-105 transition-transform">
+                  <CloudUpload className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenDatabaseManager();
-                  }}
-                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-colors shadow-xs shrink-0"
-                >
-                  Buka Menu Hapus
-                </button>
-              </div>
+                <div>
+                  <div className="text-xs font-bold">Unggah ke Cloud</div>
+                  <p className="text-[10px] text-blue-600/80 leading-tight mt-0.5">
+                    Cadangkan data lokal ke Firestore
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleDownloadFromCloud}
+                disabled={isSyncing || isRestoring}
+                className="p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100/90 text-indigo-800 flex items-center gap-3 text-left transition-all group shadow-2xs disabled:opacity-50"
+              >
+                <div className="p-2 rounded-lg bg-indigo-600 text-white shrink-0 group-hover:scale-105 transition-transform">
+                  <CloudDownload className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold">Pulihkan dari Cloud</div>
+                  <p className="text-[10px] text-indigo-600/80 leading-tight mt-0.5">
+                    Unduh data ujian & nilai terbaru
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback / Status Message Alert */}
+          {statusMessage && (
+            <div className={`p-3.5 rounded-xl border text-xs flex items-start gap-2.5 animate-in fade-in duration-150 ${
+              statusMessage.type === 'success' 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : statusMessage.type === 'error'
+                  ? 'bg-rose-50 border-rose-200 text-rose-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+            }`}>
+              {statusMessage.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
+              {statusMessage.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />}
+              {statusMessage.type === 'info' && <RefreshCw className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 animate-spin" />}
+              <span className="font-medium">{statusMessage.text}</span>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
+        {/* Modal Footer */}
+        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          {onOpenDatabaseManager ? (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenDatabaseManager();
+              }}
+              className="text-xs text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1.5"
+            >
+              <Database className="w-3.5 h-3.5" />
+              Kelola File JSON Lokal
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold text-xs transition-colors"
+            className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors shadow-2xs"
           >
             Tutup
           </button>

@@ -122,8 +122,8 @@ export function loadInitialState(): AppState {
       teacher: DEFAULT_TEACHER_PROFILE,
       kyocera: DEFAULT_KYOCERA_CONFIG,
       exams: SAMPLE_EXAMS,
-      students: SAMPLE_STUDENTS,
-      results: generateInitialResults(SAMPLE_EXAMS[0], SAMPLE_STUDENTS),
+      students: [],
+      results: [],
       activeExamId: SAMPLE_EXAMS[0].id,
       lastSyncedAt: new Date().toISOString()
     };
@@ -133,8 +133,7 @@ export function loadInitialState(): AppState {
   const kyocera = getStoredKyoceraSettings();
   const exams = getStoredExams();
   const students = getStoredStudents();
-  const rawResults = getStoredResults();
-  const results = rawResults.length > 0 ? rawResults : generateInitialResults(exams[0] || SAMPLE_EXAMS[0], students);
+  const results = getStoredResults();
   const activeExamId = localStorage.getItem(STORAGE_KEYS.ACTIVE_EXAM_ID) || exams[0]?.id || SAMPLE_EXAMS[0].id;
   const lastSyncedAt = localStorage.getItem(STORAGE_KEYS.CLOUD_SYNC_TS) || new Date().toISOString();
 
@@ -252,24 +251,7 @@ export function purgeEntireDatabase(): AppState {
  * Reset Database ke Contoh Data Standar (Default Demo Factory)
  */
 export function resetDatabaseToFactoryDemo(): AppState {
-  if (typeof window !== 'undefined') {
-    Object.values(STORAGE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
-    });
-  }
-
-  const defaultState: AppState = {
-    teacher: DEFAULT_TEACHER_PROFILE,
-    kyocera: DEFAULT_KYOCERA_CONFIG,
-    exams: SAMPLE_EXAMS,
-    students: SAMPLE_STUDENTS,
-    results: generateInitialResults(SAMPLE_EXAMS[0], SAMPLE_STUDENTS),
-    activeExamId: SAMPLE_EXAMS[0].id,
-    lastSyncedAt: new Date().toISOString()
-  };
-
-  saveStateToStorage(defaultState);
-  return defaultState;
+  return purgeEntireDatabase();
 }
 
 /**

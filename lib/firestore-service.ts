@@ -2,10 +2,10 @@ import {
   collection, 
   doc, 
   setDoc, 
-  getDoc, 
   getDocs, 
   deleteDoc, 
-  writeBatch
+  writeBatch,
+  getDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import configJson from '../firebase-applet-config.json';
@@ -18,39 +18,37 @@ import { AppState } from './storage';
 
 export const FIREBASE_PROJECT_INFO = {
   projectId: configJson.projectId,
-  authDomain: configJson.authDomain,
+  databaseName: 'Cloud Firestore',
   firestoreDatabaseId: configJson.firestoreDatabaseId || '(default)'
 };
 
-// Collection references
+// Collection Names
 const EXAMS_COLLECTION = 'exams';
 const STUDENTS_COLLECTION = 'students';
-const RESULTS_COLLECTION = 'scanResults';
-const SETTINGS_COLLECTION = 'settings';
+const SCAN_RESULTS_COLLECTION = 'scan_results';
+const APP_META_COLLECTION = 'app_meta';
+const META_DOC_ID = 'global_config';
 
-export interface CloudSyncStatus {
-  isConnected: boolean;
-  latencyMs?: number;
-  lastSyncedAt?: string;
-  examsCount: number;
-  studentsCount: number;
-  resultsCount: number;
-  projectId: string;
-  databaseId: string;
+/**
+ * Helper to remove undefined values before Firestore writes
+ */
+function cleanForFirestore<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
 }
 
 /**
  * Test & Ping Firestore database connection status
  */
 export async function checkFirestoreConnection(): Promise<{ connected: boolean; latencyMs: number; error?: string }> {
-  const start = Date.now();
+  const start = performance.now();
   try {
-    const snap = await getDoc(doc(db, SETTINGS_COLLECTION, 'teacherProfile'));
-    const latencyMs = Date.now() - start;
-    return { connected: true, latencyMs };
-  } catch (err: any) {
-    const latencyMs = Date.now() - start;
-    return { connected: false, latencyMs, error: err.message || 'Connection timeout' };
+    const metaRef = doc(db, APP_META_COLLECTION, 'health_ping');
+    await getDoc(metaRef);
+    const latency = Math.round(performance.now() - start);
+    return { connected: true, latencyMs: latency };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { connected: false, latencyMs: 0, error: message };
   }
 }
 
@@ -60,48 +58,38 @@ export async function checkFirestoreConnection(): Promise<{ connected: boolean; 
 export async function syncStateToFirestore(state: AppState): Promise<void> {
   const batch = writeBatch(db);
 
-  // 1. Settings
-  if (state.teacher) {
-    const teacherDocRef = doc(db, SETTINGS_COLLECTION, 'teacherProfile');
-    batch.set(teacherDocRef, { ...state.teacher, updatedAt: new Date().toISOString() });
-  }
-
-  if (state.kyocera) {
-    const kyoceraDocRef = doc(db, SETTINGS_COLLECTION, 'kyoceraConfig');
-    batch.set(kyoceraDocRef, { ...state.kyocera, updatedAt: new Date().toISOString() });
-  }
-
-  // 2. Exams
+  // 1. Sync Exams
   if (state.exams && state.exams.length > 0) {
-    state.exams.forEach(exam => {
+    for (const exam of state.exams) {
       const examRef = doc(db, EXAMS_COLLECTION, exam.id);
-      batch.set(examRef, {
-        ...exam,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-    });
+      batch.set(examRef, cleanForFirestore(exam), { merge: true });
+    }
   }
 
-  // 3. Students
+  // 2. Sync Students
   if (state.students && state.students.length > 0) {
-    state.students.forEach(student => {
-      const studentRef = doc(db, STUDENTS_COLLECTION, student.id);
-      batch.set(studentRef, student, { merge: true });
-    });
+    for (const student of state.students) {
+      const studentRef = doc(db, STUDENTS_COLLECTION, student.id || student.studentNo);
+      batch.set(studentRef, cleanForFirestore(student), { merge: true });
+    }
   }
 
-  // 4. Scan Results (Use composite key or result.id)
+  // 3. Sync Scan Results (limited to avoid oversized batches)
   if (state.results && state.results.length > 0) {
-    state.results.forEach(result => {
-      const resultDocId = result.id || `res_${result.studentNo}_${result.examId}`;
-      const resultRef = doc(db, RESULTS_COLLECTION, resultDocId);
-      batch.set(resultRef, {
-        ...result,
-        id: resultDocId,
-        syncedAt: new Date().toISOString()
-      }, { merge: true });
-    });
+    for (const result of state.results.slice(0, 100)) {
+      const resultRef = doc(db, SCAN_RESULTS_COLLECTION, result.id);
+      batch.set(resultRef, cleanForFirestore(result), { merge: true });
+    }
   }
+
+  // 4. Sync Metadata (Teacher profile, Kyocera settings, active exam ID)
+  const metaRef = doc(db, APP_META_COLLECTION, META_DOC_ID);
+  batch.set(metaRef, cleanForFirestore({
+    teacher: state.teacher,
+    kyocera: state.kyocera,
+    activeExamId: state.activeExamId,
+    lastSyncedAt: new Date().toISOString()
+  }), { merge: true });
 
   await batch.commit();
 }
@@ -110,57 +98,41 @@ export async function syncStateToFirestore(state: AppState): Promise<void> {
  * Fetch all documents from Cloud Firestore
  */
 export async function fetchStateFromFirestore(): Promise<Partial<AppState>> {
-  const partialState: Partial<AppState> = {};
+  const fetchedState: Partial<AppState> = {};
 
   try {
-    // 1. Get Settings
-    const teacherSnap = await getDoc(doc(db, SETTINGS_COLLECTION, 'teacherProfile'));
-    if (teacherSnap.exists()) {
-      partialState.teacher = teacherSnap.data() as TeacherProfile;
-    }
-
-    const kyoceraSnap = await getDoc(doc(db, SETTINGS_COLLECTION, 'kyoceraConfig'));
-    if (kyoceraSnap.exists()) {
-      partialState.kyocera = kyoceraSnap.data() as KyoceraSettings;
-    }
-
-    // 2. Get Exams
+    // 1. Fetch Exams
     const examsSnap = await getDocs(collection(db, EXAMS_COLLECTION));
-    const exams: ExamConfig[] = [];
-    examsSnap.forEach(d => {
-      exams.push(d.data() as ExamConfig);
-    });
-    if (exams.length > 0) {
-      partialState.exams = exams;
+    if (!examsSnap.empty) {
+      fetchedState.exams = examsSnap.docs.map(d => d.data() as ExamConfig);
     }
 
-    // 3. Get Students
+    // 2. Fetch Students
     const studentsSnap = await getDocs(collection(db, STUDENTS_COLLECTION));
-    const students: Student[] = [];
-    studentsSnap.forEach(d => {
-      students.push(d.data() as Student);
-    });
-    if (students.length > 0) {
-      partialState.students = students;
+    if (!studentsSnap.empty) {
+      fetchedState.students = studentsSnap.docs.map(d => d.data() as Student);
     }
 
-    // 4. Get Results
-    const resultsSnap = await getDocs(collection(db, RESULTS_COLLECTION));
-    const results: ScanResult[] = [];
-    resultsSnap.forEach(d => {
-      results.push(d.data() as ScanResult);
-    });
-    if (results.length > 0) {
-      partialState.results = results;
+    // 3. Fetch Scan Results
+    const resultsSnap = await getDocs(collection(db, SCAN_RESULTS_COLLECTION));
+    if (!resultsSnap.empty) {
+      fetchedState.results = resultsSnap.docs.map(d => d.data() as ScanResult);
     }
 
-    partialState.lastSyncedAt = new Date().toISOString();
+    // 4. Fetch Meta
+    const metaSnap = await getDoc(doc(db, APP_META_COLLECTION, META_DOC_ID));
+    if (metaSnap.exists()) {
+      const metaData = metaSnap.data();
+      if (metaData.teacher) fetchedState.teacher = metaData.teacher as TeacherProfile;
+      if (metaData.kyocera) fetchedState.kyocera = metaData.kyocera as KyoceraSettings;
+      if (metaData.activeExamId) fetchedState.activeExamId = metaData.activeExamId as string;
+    }
   } catch (error) {
     console.error('Failed to fetch from Firestore:', error);
     throw error;
   }
 
-  return partialState;
+  return fetchedState;
 }
 
 /**
@@ -168,49 +140,56 @@ export async function fetchStateFromFirestore(): Promise<Partial<AppState>> {
  */
 export async function saveExamToFirestore(exam: ExamConfig): Promise<void> {
   const examRef = doc(db, EXAMS_COLLECTION, exam.id);
-  await setDoc(examRef, { ...exam, updatedAt: new Date().toISOString() }, { merge: true });
+  await setDoc(examRef, cleanForFirestore(exam), { merge: true });
 }
 
 /**
  * Delete Exam from Firestore
  */
 export async function deleteExamFromFirestore(examId: string): Promise<void> {
-  await deleteDoc(doc(db, EXAMS_COLLECTION, examId));
+  const examRef = doc(db, EXAMS_COLLECTION, examId);
+  await deleteDoc(examRef);
 }
 
 /**
  * Save Single Scan Result to Firestore
  */
 export async function saveScanResultToFirestore(result: ScanResult): Promise<void> {
-  const docId = result.id || `res_${result.studentNo}_${result.examId}`;
-  const resRef = doc(db, RESULTS_COLLECTION, docId);
-  await setDoc(resRef, { ...result, id: docId, syncedAt: new Date().toISOString() }, { merge: true });
+  const resultRef = doc(db, SCAN_RESULTS_COLLECTION, result.id);
+  await setDoc(resultRef, cleanForFirestore(result), { merge: true });
 }
 
 /**
  * Save Batch Scan Results to Firestore
  */
 export async function saveBatchScanResultsToFirestore(results: ScanResult[]): Promise<void> {
-  if (!results || results.length === 0) return;
+  if (results.length === 0) return;
   const batch = writeBatch(db);
-  results.forEach(result => {
-    const docId = result.id || `res_${result.studentNo}_${result.examId}`;
-    const resRef = doc(db, RESULTS_COLLECTION, docId);
-    batch.set(resRef, { ...result, id: docId, syncedAt: new Date().toISOString() }, { merge: true });
-  });
+  for (const r of results) {
+    const ref = doc(db, SCAN_RESULTS_COLLECTION, r.id);
+    batch.set(ref, cleanForFirestore(r), { merge: true });
+  }
   await batch.commit();
 }
 
 /**
- * Purge All Cloud Database collections
+ * Delete Single Scan Result from Firestore
+ */
+export async function deleteScanResultFromFirestore(resultId: string): Promise<void> {
+  const resultRef = doc(db, SCAN_RESULTS_COLLECTION, resultId);
+  await deleteDoc(resultRef);
+}
+
+/**
+ * Purge entire Firestore database
  */
 export async function purgeFirestoreDatabase(): Promise<void> {
-  const collections = [EXAMS_COLLECTION, STUDENTS_COLLECTION, RESULTS_COLLECTION];
-  for (const collName of collections) {
-    const snap = await getDocs(collection(db, collName));
+  const collections = [EXAMS_COLLECTION, STUDENTS_COLLECTION, SCAN_RESULTS_COLLECTION, APP_META_COLLECTION];
+  for (const col of collections) {
+    const snap = await getDocs(collection(db, col));
     const batch = writeBatch(db);
-    snap.forEach(d => {
-      batch.delete(d.ref);
+    snap.docs.forEach(docSnap => {
+      batch.delete(docSnap.ref);
     });
     await batch.commit();
   }

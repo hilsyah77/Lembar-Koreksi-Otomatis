@@ -88,9 +88,6 @@ export function generatePrintableLjkFullA4(
   doc.setFontSize(7.5);
   doc.text('NAMA PESERTA :', marginLeft + 6, idStartY + 4.8);
   doc.rect(marginLeft + 32, idStartY + 1.5, idBoxW - 31, 5.5); // Nama input box
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'italic');
-  doc.text('(Tuliskan nama lengkap peserta dengan huruf kapital)', marginLeft + 34, idStartY + 5.2);
 
   // Split section under Name: NISN Matrix (Left) and Paket/Sign/Tgl (Right)
   const subIdY = idStartY + 8.5;
@@ -496,9 +493,6 @@ export function generatePrintableLjkA4DividedBy2(
       doc.setFontSize(6);
       doc.text('NAMA PESERTA:', startX + 5, idStartY + 3.8);
       doc.rect(startX + 23, idStartY + 1.2, idBoxW - 22, 4.2);
-      doc.setFontSize(5);
-      doc.setFont('helvetica', 'italic');
-      doc.text('(Tuliskan nama lengkap peserta dengan huruf kapital)', startX + 25, idStartY + 4.0);
 
       // Left Column inside ID box: NISN 10 Digit Matrix
       const nisnBoxW = 75;

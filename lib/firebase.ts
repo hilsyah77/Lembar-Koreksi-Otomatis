@@ -4,12 +4,12 @@ import { getAuth, Auth } from 'firebase/auth';
 import configJson from '../firebase-applet-config.json';
 
 const firebaseConfig = {
+  projectId: configJson.projectId,
+  appId: configJson.appId,
   apiKey: configJson.apiKey,
   authDomain: configJson.authDomain,
-  projectId: configJson.projectId,
   storageBucket: configJson.storageBucket,
   messagingSenderId: configJson.messagingSenderId,
-  appId: configJson.appId
 };
 
 // Initialize Firebase App singleton

@@ -119,8 +119,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
         {/* Nama Peserta */}
         <div className="flex items-center gap-1">
           <span className="font-bold text-[8.5px] text-slate-900 print:text-black shrink-0">NAMA PESERTA :</span>
-          <div className="flex-1 h-4.5 border border-slate-500 print:border-black bg-slate-50/30 print:bg-white rounded-xs px-1.5 flex items-center text-[8px] font-mono text-slate-400">
-            (Tuliskan nama lengkap peserta)
+          <div className="flex-1 h-4.5 border border-slate-500 print:border-black bg-white rounded-xs px-1.5 flex items-center">
           </div>
         </div>
 
@@ -650,8 +649,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                   <div className="border border-slate-700 print:border-black rounded-sm p-3 bg-white mx-1 my-2">
                     <div className="flex items-center gap-2 mb-2.5">
                       <span className="font-bold text-[11px] sm:text-xs text-slate-900 print:text-black shrink-0">NAMA PESERTA :</span>
-                      <div className="flex-1 h-7 border border-slate-500 print:border-black bg-slate-50/30 print:bg-white rounded-xs px-2.5 flex items-center text-[11px] sm:text-xs font-mono text-slate-400">
-                        (Tuliskan nama lengkap peserta dengan huruf kapital)
+                      <div className="flex-1 h-7 border border-slate-500 print:border-black bg-white rounded-xs px-2.5 flex items-center">
                       </div>
                     </div>
 

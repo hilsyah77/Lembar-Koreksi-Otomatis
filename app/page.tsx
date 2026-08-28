@@ -14,9 +14,8 @@ import { ScanResultsTable } from '@/components/ScanResultsTable';
 import { TeacherProfileModal } from '@/components/TeacherProfileModal';
 import { ExamConfigModal } from '@/components/ExamConfigModal';
 import { StudentListModal } from '@/components/StudentListModal';
-import { CloudSyncModal } from '@/components/CloudSyncModal';
 import { DatabaseManagerModal } from '@/components/DatabaseManagerModal';
-import { FirebaseStatusBanner } from '@/components/FirebaseStatusBanner';
+import { CloudSyncModal } from '@/components/CloudSyncModal';
 
 import { 
   ExamConfig, 
@@ -49,9 +48,7 @@ import {
 import { 
   saveScanResultToFirestore, 
   saveBatchScanResultsToFirestore,
-  saveExamToFirestore,
-  syncStateToFirestore,
-  fetchStateFromFirestore
+  fetchStateFromFirestore 
 } from '@/lib/firestore-service';
 
 export default function Home() {
@@ -63,7 +60,7 @@ export default function Home() {
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
   const [teacher, setTeacher] = useState<TeacherProfile>(INITIAL_TEACHER_PROFILE);
   const [kyocera, setKyocera] = useState<KyoceraSettings>(INITIAL_KYOCERA_SETTINGS);
-  const [results, setResults] = useState<ScanResult[]>(() => generateSampleScanResults(INITIAL_EXAM, INITIAL_STUDENTS));
+  const [results, setResults] = useState<ScanResult[]>([]);
 
   // Modal States
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState<boolean>(false);
@@ -77,53 +74,82 @@ export default function Home() {
     let isCancelled = false;
 
     async function loadHydratedData() {
-      // Async tick to avoid synchronous cascading renders during effect mount
       await Promise.resolve();
       if (isCancelled) return;
 
       try {
         const storedExams = getStoredExams();
-        if (storedExams && storedExams.length > 0) {
+        const hasLegacyDemoExams = storedExams.some(e => e.id === 'exam-pts-mat-2025' || e.id === 'exam-uh1-mat-2025');
+        if (hasLegacyDemoExams) {
+          setExams(INITIAL_EXAMS);
+          saveExams(INITIAL_EXAMS);
+          setActiveExamId(INITIAL_EXAM.id);
+        } else if (storedExams && storedExams.length > 0) {
           setExams(storedExams);
           setActiveExamId(prev => storedExams.some(e => e.id === prev) ? prev : storedExams[0].id);
         }
+
         const storedStudents = getStoredStudents();
-        if (storedStudents && storedStudents.length > 0) {
+        const hasLegacyDemoStudents = storedStudents.some(s => s.id?.startsWith('std-') && s.studentNo === '120101001');
+        if (hasLegacyDemoStudents) {
+          setStudents([]);
+          saveStudents([]);
+        } else if (storedStudents) {
           setStudents(storedStudents);
         }
+
         const storedTeacher = getStoredTeacherProfile();
-        if (storedTeacher) {
+        if (storedTeacher && storedTeacher.namaGuru === 'Drs. H. Ahmad Sudrajat, M.Pd.') {
+          setTeacher(INITIAL_TEACHER_PROFILE);
+          saveTeacherProfile(INITIAL_TEACHER_PROFILE);
+        } else if (storedTeacher) {
           setTeacher(storedTeacher);
         }
+
         const storedKyocera = getStoredKyoceraSettings();
         if (storedKyocera) {
           setKyocera(storedKyocera);
         }
+
         const storedResults = getStoredResults();
-        if (storedResults && storedResults.length > 0) {
+        const hasLegacyDemoResults = storedResults.some(r => r.id?.startsWith('res-std-') || r.examId === 'exam-pts-mat-2025');
+        if (hasLegacyDemoResults) {
+          setResults([]);
+          saveResults([]);
+        } else if (storedResults && storedResults.length > 0) {
           setResults(storedResults);
         }
       } catch (err) {
         console.warn('Local storage hydration fallback:', err);
       }
 
+      // Check cloud Firestore for latest state
       try {
         const cloudData = await fetchStateFromFirestore();
         if (isCancelled) return;
         if (cloudData.exams && cloudData.exams.length > 0) {
-          setExams(cloudData.exams);
-          saveExams(cloudData.exams);
-          setActiveExamId(prev => cloudData.exams!.some(e => e.id === prev) ? prev : cloudData.exams![0].id);
+          const cloudHasDemo = cloudData.exams.some(e => e.id === 'exam-pts-mat-2025' || e.id === 'exam-uh1-mat-2025');
+          if (!cloudHasDemo) {
+            setExams(cloudData.exams);
+            saveExams(cloudData.exams);
+            setActiveExamId(prev => cloudData.exams!.some(e => e.id === prev) ? prev : cloudData.exams![0].id);
+          }
         }
-        if (cloudData.students && cloudData.students.length > 0) {
-          setStudents(cloudData.students);
-          saveStudents(cloudData.students);
+        if (cloudData.students) {
+          const cloudStudentsDemo = cloudData.students.some(s => s.id?.startsWith('std-') && s.studentNo === '120101001');
+          if (!cloudStudentsDemo) {
+            setStudents(cloudData.students);
+            saveStudents(cloudData.students);
+          }
         }
-        if (cloudData.results && cloudData.results.length > 0) {
-          setResults(cloudData.results);
-          saveResults(cloudData.results);
+        if (cloudData.results) {
+          const cloudResultsDemo = cloudData.results.some(r => r.id?.startsWith('res-std-') || r.examId === 'exam-pts-mat-2025');
+          if (!cloudResultsDemo) {
+            setResults(cloudData.results);
+            saveResults(cloudData.results);
+          }
         }
-        if (cloudData.teacher) {
+        if (cloudData.teacher && cloudData.teacher.namaGuru !== 'Drs. H. Ahmad Sudrajat, M.Pd.') {
           setTeacher(cloudData.teacher);
           saveTeacherProfile(cloudData.teacher);
         }
@@ -132,7 +158,7 @@ export default function Home() {
           saveKyoceraSettings(cloudData.kyocera);
         }
       } catch {
-        // Silently use offline cache
+        // Silently use offline cache if cloud is not reachable
       }
     }
 
@@ -157,7 +183,6 @@ export default function Home() {
         updated = [newResult, ...prev];
       }
       saveResults(updated);
-      // Persist to Cloud Firestore in background
       saveScanResultToFirestore(newResult).catch(() => {});
       return updated;
     });
@@ -171,7 +196,6 @@ export default function Home() {
       batch.forEach(r => mergedMap.set(`${r.studentNo}-${r.examId}`, r));
       const updated = Array.from(mergedMap.values());
       saveResults(updated);
-      // Persist batch to Cloud Firestore in background
       saveBatchScanResultsToFirestore(batch).catch(() => {});
       return updated;
     });
@@ -249,7 +273,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased print:bg-white print:min-h-0 print:p-0">
-      {/* Top Navigation Header */}
+      {/* Top Navigation Bar with Main Menu & Master Data */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -384,11 +408,6 @@ export default function Home() {
         currentState={currentAppState}
         onStatePurged={handleStatePurged}
         onResultsPurged={handleResultsPurged}
-      />
-
-      {/* Floating Firebase Connection Notification & Live Monitor */}
-      <FirebaseStatusBanner 
-        onOpenCloudModal={() => setIsCloudModalOpen(true)} 
       />
     </div>
   );
