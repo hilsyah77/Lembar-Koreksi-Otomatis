@@ -395,7 +395,22 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {onOpenExamModal && (
+            <button
+              type="button"
+              onClick={() => {
+                handleApplyToCurrentExam();
+                onOpenExamModal();
+              }}
+              title="Buka & Sesuaikan Kunci Jawaban Penilaian Ini"
+              className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-all hover:scale-[1.01] active:scale-[0.98]"
+            >
+              <Key className="w-4 h-4 text-amber-600" />
+              <span>Kunci Jawaban ({totalQ} Soal)</span>
+            </button>
+          )}
+
           <button
             onClick={handleDownloadPdf}
             className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-200 transition-all"
