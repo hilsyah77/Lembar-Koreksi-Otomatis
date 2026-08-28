@@ -48,6 +48,7 @@ import {
 import { 
   saveScanResultToFirestore, 
   saveBatchScanResultsToFirestore,
+  saveExamToFirestore,
   fetchStateFromFirestore 
 } from '@/lib/firestore-service';
 
@@ -346,6 +347,7 @@ export default function Home() {
 
         {activeTab === 'LJK_TEMPLATE' && (
           <LjkTemplateGenerator
+            key={`ljk-gen-${activeExam.id}-${activeExam.totalQuestions}-${activeExam.optionsCount}-${activeExam.updatedAt || ''}`}
             exam={activeExam}
             teacher={teacher}
             onUpdateExam={(updated) => {
@@ -354,7 +356,9 @@ export default function Home() {
                 saveExams(next);
                 return next;
               });
+              saveExamToFirestore(updated).catch(() => {});
             }}
+            onOpenExamModal={() => setIsExamModalOpen(true)}
           />
         )}
       </main>
@@ -371,6 +375,7 @@ export default function Home() {
       />
 
       <ExamConfigModal
+        key={`exam-modal-${isExamModalOpen ? 'open' : 'closed'}-${activeExam.id}-${activeExam.totalQuestions}-${activeExam.optionsCount}-${activeExam.updatedAt || ''}`}
         isOpen={isExamModalOpen}
         onClose={() => setIsExamModalOpen(false)}
         exam={activeExam}
@@ -380,6 +385,7 @@ export default function Home() {
             saveExams(next);
             return next;
           });
+          saveExamToFirestore(updated).catch(() => {});
         }}
       />
 

@@ -9,21 +9,24 @@ import {
   CheckCircle2, 
   FileCheck2,
   Sliders,
-  Layers
+  Layers,
+  Key
 } from 'lucide-react';
-import { ExamConfig, TeacherProfile } from '@/types/omr';
+import { ExamConfig, TeacherProfile, OptionLetter } from '@/types/omr';
 import { generatePrintableLjkFullA4, generatePrintableLjkA4DividedBy2 } from '@/lib/pdf-generator';
 
 interface LjkTemplateGeneratorProps {
   exam: ExamConfig;
   teacher: TeacherProfile;
   onUpdateExam: (updated: ExamConfig) => void;
+  onOpenExamModal?: () => void;
 }
 
 export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
   exam,
   teacher,
-  onUpdateExam
+  onUpdateExam,
+  onOpenExamModal
 }) => {
   const [layoutMode, setLayoutMode] = useState<'landscape_divided' | 'full_a4'>('landscape_divided');
   const [totalQ, setTotalQ] = useState<number>(exam.totalQuestions || 25);
@@ -31,13 +34,43 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const handleApplyToCurrentExam = () => {
+    const rawPackets = exam.packets && exam.packets.length > 0
+      ? exam.packets
+      : [{ packetCode: 'A', keys: {} }];
+
+    const updatedPackets = rawPackets.map(pkt => {
+      const newKeys: Record<number, OptionLetter> = { ...(pkt.keys || {}) };
+      for (let i = 1; i <= totalQ; i++) {
+        if (!newKeys[i]) {
+          newKeys[i] = 'A';
+        }
+        if (optCount === 4 && newKeys[i] === 'E') {
+          newKeys[i] = 'D';
+        }
+      }
+      return {
+        packetCode: pkt.packetCode || 'A',
+        keys: newKeys
+      };
+    });
+
+    const updatedWeights: Record<number, number> = { ...(exam.questionWeights || {}) };
+    for (let i = 1; i <= totalQ; i++) {
+      if (updatedWeights[i] === undefined) {
+        updatedWeights[i] = 1;
+      }
+    }
+
     onUpdateExam({
       ...exam,
       totalQuestions: totalQ,
-      optionsCount: optCount
+      optionsCount: optCount,
+      packets: updatedPackets,
+      questionWeights: updatedWeights,
+      updatedAt: new Date().toISOString()
     });
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    setTimeout(() => setIsCopied(false), 2500);
   };
 
   const handleDownloadPdf = () => {
@@ -451,48 +484,69 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
             {/* Total Questions Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
-                Jumlah Butir Soal Pilihan Ganda
-              </label>
-              <div className="grid grid-cols-5 gap-2 text-xs">
-                {[20, 25, 30, 40, 50].map(num => (
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-emerald-600" />
+                  Jumlah Butir Soal:
+                </label>
+                <span className="text-emerald-700 font-extrabold text-xs bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  {totalQ} Soal
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                {[10, 15, 20, 25, 30, 35, 40, 45, 50].map(num => (
                   <button
                     key={num}
+                    type="button"
                     onClick={() => setTotalQ(num)}
-                    className={`py-2 rounded-lg font-bold border transition-all ${
+                    className={`px-2.5 py-1 rounded-lg font-bold border transition-all ${
                       totalQ === num
                         ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
                     }`}
                   >
                     {num}
                   </button>
                 ))}
+                <div className="flex items-center gap-1 ml-auto">
+                  <span className="text-[11px] text-slate-500 font-medium">Kustom:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={totalQ}
+                    onChange={(e) => setTotalQ(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                    className="w-14 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-bold text-slate-900 text-xs focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Options Count */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
-                Opsi Pilihan Ganda
+              <label className="block text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                Format Opsi Pilihan Ganda:
               </label>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
+                  type="button"
                   onClick={() => setOptCount(4)}
-                  className={`py-2 rounded-lg font-semibold border transition-all ${
+                  className={`py-2 rounded-lg font-bold border transition-all ${
                     optCount === 4
                       ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   4 Pilihan (A, B, C, D)
                 </button>
                 <button
+                  type="button"
                   onClick={() => setOptCount(5)}
-                  className={`py-2 rounded-lg font-semibold border transition-all ${
+                  className={`py-2 rounded-lg font-bold border transition-all ${
                     optCount === 5
                       ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   5 Pilihan (A, B, C, D, E)
@@ -501,7 +555,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             </div>
 
             {/* Exam & School Metadata in LJK Header */}
-            <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
+            <div className="space-y-2 pt-3 border-t border-slate-100 text-xs">
               <div>
                 <span className="text-slate-500 font-medium">Kop Madrasah/Sekolah:</span>
                 <p className="font-bold text-slate-900">{teacher.namaSekolah}</p>
@@ -516,22 +570,40 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handleApplyToCurrentExam}
-              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 transition-colors shadow-xs"
-            >
-              {isCopied ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Format Disimpan ke Ujian Aktif!
-                </>
-              ) : (
-                <>
-                  <FileCheck2 className="w-4 h-4 text-emerald-600" />
-                  Sinkronkan ke Ujian Aktif
-                </>
+            {/* Sync and Key Config Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleApplyToCurrentExam}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-emerald-200"
+              >
+                {isCopied ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    Format Disimpan ke Ujian Aktif!
+                  </>
+                ) : (
+                  <>
+                    <FileCheck2 className="w-4 h-4" />
+                    Sinkronkan ke Ujian Aktif ({totalQ} Soal)
+                  </>
+                )}
+              </button>
+
+              {onOpenExamModal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleApplyToCurrentExam();
+                    onOpenExamModal();
+                  }}
+                  className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  Atur Kunci Jawaban & Bobot ({totalQ} Soal)
+                </button>
               )}
-            </button>
+            </div>
           </div>
 
           {/* Scanner Compatibility Info Card */}
