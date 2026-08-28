@@ -169,12 +169,12 @@ export function processLjkCanvas(
     detectedPacket = packetDensities[0].packet;
   }
 
-  // Detect Student Number (9-10 digits)
-  // Scan 9 columns of 0-9 bubbles in the ID block
+  // Detect Student Number (10 digits)
+  // Scan 10 columns of 0-9 bubbles in the ID block
   let scannedDigits = '';
-  for (let col = 0; col < 9; col++) {
+  for (let col = 0; col < 10; col++) {
     const digitDensities: { digit: number; density: number }[] = [];
-    const digitColX = width * 0.12 + col * (width * 0.038);
+    const digitColX = width * 0.12 + col * (width * 0.035);
 
     for (let row = 0; row <= 9; row++) {
       const digitRowY = height * 0.15 + row * (height * 0.022);
@@ -194,14 +194,14 @@ export function processLjkCanvas(
   // Match with known students if available
   let matchedStudent = knownStudents.find(s => s.studentNo === scannedDigits);
   if (!matchedStudent && knownStudents.length > 0) {
-    // If not exact, find nearest by prefix or fallback to sample
-    matchedStudent = knownStudents.find(s => s.studentNo.slice(0, 4) === scannedDigits.slice(0, 4)) || knownStudents[0];
+    // If not exact, find nearest by prefix or fallback to first student
+    matchedStudent = knownStudents.find(s => s.studentNo.slice(0, 5) === scannedDigits.slice(0, 5)) || knownStudents[0];
   }
 
   const processingTimeMs = Math.round(performance.now() - startTime);
 
   return {
-    studentNo: matchedStudent ? matchedStudent.studentNo : scannedDigits || '120101001',
+    studentNo: matchedStudent ? matchedStudent.studentNo : (scannedDigits || '0081234501'),
     studentName: matchedStudent ? matchedStudent.name : 'Siswa Terpindai',
     packetCode: detectedPacket,
     answers,
