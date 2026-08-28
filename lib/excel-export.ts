@@ -8,12 +8,14 @@ export function exportExamResultsToExcel(
   analytics: ClassAnalytics
 ): void {
   const wb = XLSX.utils.book_new();
+  const displaySubject = teacher.mataPelajaran || exam.subject;
+  const displayClass = teacher.tingkatKelas || exam.gradeClass;
 
   // 1. Sheet: Rekap Nilai
   const rekapData: any[] = [
     ['LAPORAN REKAPITULASI PENILAIAN HASIL LJK (OMR)'],
-    [`Sekolah: ${teacher.namaSekolah}`, `Mata Pelajaran: ${exam.subject}`],
-    [`Kelas: ${exam.gradeClass}`, `Guru Pengampu: ${teacher.namaGuru} (NIP: ${teacher.nip})`],
+    [`Sekolah: ${teacher.namaSekolah}`, `Mata Pelajaran: ${displaySubject}`],
+    [`Kelas: ${displayClass}`, `Guru Pengampu: ${teacher.namaGuru} (NIP: ${teacher.nip})`],
     [`Tanggal Ujian: ${exam.date}`, `Batas Kelulusan (KKM): ${exam.kkm}`],
     [],
     ['STATISTIK KELAS'],
@@ -126,6 +128,6 @@ export function exportExamResultsToExcel(
   XLSX.utils.book_append_sheet(wb, wsItem, 'Analisis Butir Soal');
 
   // Write file
-  const fileName = `Rekap-Nilai-LJK-${exam.subject.replace(/\s+/g, '_')}_${exam.gradeClass.replace(/\s+/g, '_')}.xlsx`;
+  const fileName = `Rekap-Nilai-LJK-${displaySubject.replace(/\s+/g, '_')}_${displayClass.replace(/\s+/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

@@ -70,6 +70,10 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
     : (totalQ <= 25 ? 2 : totalQ <= 40 ? 3 : 4);
   const qPerCol = Math.ceil(totalQ / numCols);
 
+  // Derive display subject & class from teacher profile (data guru pengampu)
+  const displaySubject = teacher.mataPelajaran || exam.subject;
+  const displayClass = teacher.tingkatKelas || exam.gradeClass;
+
   // Helper component to render an individual A5 LJK half (140mm x 200mm)
   const renderSingleLjkHalf = (studentNo: number) => (
     <div className="print-ljk-half flex-1 bg-white p-3.5 sm:p-4 print:p-2 rounded-lg border-2 border-slate-900 print:border-black text-slate-900 print:text-black flex flex-col justify-between relative box-border overflow-hidden">
@@ -88,7 +92,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
           LEMBAR JAWABAN KOMPUTER (LJK)
         </div>
         <div className="text-[8.5px] text-slate-700 print:text-black font-semibold mt-0.5">
-          Mapel: <span className="font-bold text-black">{exam.subject}</span> | Kelas: <span className="font-bold text-black">{exam.gradeClass}</span> | Th. Ajaran: <span className="font-bold text-black">{teacher.tahunAjaran}</span>
+          Mapel: <span className="font-bold text-black">{displaySubject}</span> | Kelas: <span className="font-bold text-black">{displayClass}</span> | Th. Ajaran: <span className="font-bold text-black">{teacher.tahunAjaran}</span>
         </div>
         <div className="border-b-2 border-black mt-1 mb-0.5"></div>
         <div className="border-b border-black mb-1"></div>
@@ -165,7 +169,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
             <div className="border border-slate-400 print:border-black rounded-xs p-1 bg-white text-[7.5px] space-y-0.5">
               <div className="flex justify-between">
                 <span className="font-bold text-slate-800 print:text-black">RUANG:</span>
-                <span className="font-semibold text-slate-900 print:text-black">{exam.gradeClass}</span>
+                <span className="font-semibold text-slate-900 print:text-black">{displayClass}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-bold text-slate-800 print:text-black">TGL:</span>
@@ -504,7 +508,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
               </div>
               <div>
                 <span className="text-slate-500 font-medium">Mata Pelajaran & Kelas:</span>
-                <p className="font-bold text-slate-900">{exam.subject} ({exam.gradeClass})</p>
+                <p className="font-bold text-slate-900">{displaySubject} ({displayClass})</p>
               </div>
               <div>
                 <span className="text-slate-500 font-medium">Tahun Ajaran:</span>
@@ -619,7 +623,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                       LEMBAR JAWABAN KOMPUTER (LJK)
                     </div>
                     <div className="text-[11px] sm:text-xs text-slate-700 print:text-black font-semibold mt-0.5">
-                      Mata Pelajaran: <span className="font-bold text-black">{exam.subject}</span> &nbsp;|&nbsp; Kelas: <span className="font-bold text-black">{exam.gradeClass}</span> &nbsp;|&nbsp; Th. Ajaran: <span className="font-bold text-black">{teacher.tahunAjaran} ({teacher.semester})</span>
+                      Mata Pelajaran: <span className="font-bold text-black">{displaySubject}</span> &nbsp;|&nbsp; Kelas: <span className="font-bold text-black">{displayClass}</span> &nbsp;|&nbsp; Th. Ajaran: <span className="font-bold text-black">{teacher.tahunAjaran} ({teacher.semester})</span>
                     </div>
                     <div className="border-b-2 border-black mt-2 mb-0.5"></div>
                     <div className="border-b border-black mb-2"></div>
@@ -692,7 +696,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
                         <div className="border border-slate-400 print:border-black rounded-sm p-2 bg-white text-[10px] space-y-1">
                           <div className="flex justify-between">
                             <span className="font-bold text-slate-800">RUANG:</span>
-                            <span className="font-semibold text-slate-900">{exam.gradeClass}</span>
+                            <span className="font-semibold text-slate-900">{displayClass}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="font-bold text-slate-800">TGL:</span>

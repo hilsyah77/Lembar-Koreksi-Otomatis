@@ -27,6 +27,10 @@ export function generatePrintableLjkFullA4(
   const sheetW = pageWidth - marginLeft - marginRight;
   const sheetH = pageHeight - marginTop - marginBottom;
 
+  // Use teacher subject and class (data guru pengampu)
+  const displaySubject = teacher.mataPelajaran || exam.subject;
+  const displayClass = teacher.tingkatKelas || exam.gradeClass;
+
   // 1. Fiducial Corner Markers (5mm x 5mm black squares for scanner alignment)
   const markerSize = 5;
   doc.setFillColor(0, 0, 0);
@@ -45,7 +49,7 @@ export function generatePrintableLjkFullA4(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text(
-    `Mata Pelajaran: ${exam.subject}  |  Kelas: ${exam.gradeClass}  |  Tahun Ajaran: ${teacher.tahunAjaran} (${teacher.semester})`,
+    `Mata Pelajaran: ${displaySubject}  |  Kelas: ${displayClass}  |  Tahun Ajaran: ${teacher.tahunAjaran} (${teacher.semester})`,
     centerX,
     marginTop + 16,
     { align: 'center' }
@@ -145,7 +149,7 @@ export function generatePrintableLjkFullA4(
   doc.text('RUANG / KELAS :', sideBoxX + 2.5, tglY + 4.2);
   doc.text('TGL UJIAN      :', sideBoxX + 2.5, tglY + 9.5);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${exam.gradeClass}`, sideBoxX + 25, tglY + 4.2);
+  doc.text(`${displayClass}`, sideBoxX + 25, tglY + 4.2);
   doc.text(`${exam.date || '___/___/202_'}`, sideBoxX + 25, tglY + 9.5);
 
   // Tanda Tangan Peserta
@@ -229,7 +233,7 @@ export function generatePrintableLjkFullA4(
   doc.setFont('helvetica', 'bold');
   doc.text('KEMENTERIAN AGAMA / DINAS PENDIDIKAN', marginLeft + sheetW - 4, footerY, { align: 'right' });
 
-  doc.save(`LJK-Standar-A4-${exam.subject.replace(/\s+/g, '-')}.pdf`);
+  doc.save(`LJK-Standar-A4-${displaySubject.replace(/\s+/g, '-')}.pdf`);
 }
 
 /**
@@ -276,6 +280,9 @@ export function generatePrintableLjkA4DividedBy2(
       doc.rect(startX + sheetW - markerSize, startY + sheetH - markerSize, markerSize, markerSize, 'F');
 
       // 2. Header
+      const displaySubject = teacher.mataPelajaran || exam.subject;
+      const displayClass = teacher.tingkatKelas || exam.gradeClass;
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.text(teacher.namaSekolah.toUpperCase(), startX + sheetW / 2, startY + 4.5, { align: 'center' });
@@ -283,7 +290,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('LEMBAR JAWABAN KOMPUTER (LJK) - A4 DIBAGI 2', startX + sheetW / 2, startY + 8.5, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
-      doc.text(`Mata Pelajaran: ${exam.subject} | Kelas: ${exam.gradeClass} | Th. Ajaran: ${teacher.tahunAjaran} (${teacher.semester})`, startX + sheetW / 2, startY + 12, { align: 'center' });
+      doc.text(`Mata Pelajaran: ${displaySubject} | Kelas: ${displayClass} | Th. Ajaran: ${teacher.tahunAjaran} (${teacher.semester})`, startX + sheetW / 2, startY + 12, { align: 'center' });
 
       // Decorative Separator
       doc.setDrawColor(0, 0, 0);
@@ -452,6 +459,9 @@ export function generatePrintableLjkA4DividedBy2(
       doc.rect(startX + sheetW - markerSize, startY + sheetH - markerSize, markerSize, markerSize, 'F'); // Bottom-Right
 
       // 2. Official Header
+      const displaySubject = teacher.mataPelajaran || exam.subject;
+      const displayClass = teacher.tingkatKelas || exam.gradeClass;
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.text(teacher.namaSekolah.toUpperCase(), startX + sheetW / 2, startY + 4.5, { align: 'center' });
@@ -459,7 +469,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.text('LEMBAR JAWABAN KOMPUTER (LJK)', startX + sheetW / 2, startY + 8.2, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.2);
-      doc.text(`Mapel: ${exam.subject} | Kelas: ${exam.gradeClass} | Th. Ajaran: ${teacher.tahunAjaran}`, startX + sheetW / 2, startY + 11.5, { align: 'center' });
+      doc.text(`Mapel: ${displaySubject} | Kelas: ${displayClass} | Th. Ajaran: ${teacher.tahunAjaran}`, startX + sheetW / 2, startY + 11.5, { align: 'center' });
 
       // Separator Double Line
       doc.setDrawColor(0, 0, 0);
@@ -545,7 +555,7 @@ export function generatePrintableLjkA4DividedBy2(
       doc.rect(rightColX, infoY, rightColW, 9.5);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(5);
-      doc.text(`RUANG : ${exam.gradeClass}`, rightColX + 2, infoY + 3.5);
+      doc.text(`RUANG : ${displayClass}`, rightColX + 2, infoY + 3.5);
       doc.text(`TGL   : ${exam.date || '___/___/202_'}`, rightColX + 2, infoY + 7.5);
 
       // TTD Peserta Box
@@ -624,7 +634,8 @@ export function generatePrintableLjkA4DividedBy2(
   }
 
   const orientationLabel = isPortrait ? 'Portrait' : 'Landscape';
-  doc.save(`LJK-A4-${orientationLabel}-Bagi-2-${exam.subject.replace(/\s+/g, '-')}.pdf`);
+  const displaySubject = teacher.mataPelajaran || exam.subject;
+  doc.save(`LJK-A4-${orientationLabel}-Bagi-2-${displaySubject.replace(/\s+/g, '-')}.pdf`);
 }
 
 /**
@@ -643,6 +654,9 @@ export function generateExamReportPdf(
   });
 
   // 1. Kop Surat Resmi
+  const displaySubject = teacher.mataPelajaran || exam.subject;
+  const displayClass = teacher.tingkatKelas || exam.gradeClass;
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.text(teacher.namaSekolah.toUpperCase(), 105, 15, { align: 'center' });
@@ -650,7 +664,7 @@ export function generateExamReportPdf(
   doc.text('LAPORAN HASIL PENILAIAN LEMBAR JAWABAN KOMPUTER (LJK)', 105, 20, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.text(`${exam.title} - Mata Pelajaran: ${exam.subject} (${exam.gradeClass})`, 105, 25, { align: 'center' });
+  doc.text(`${exam.title} - Mata Pelajaran: ${displaySubject} (${displayClass})`, 105, 25, { align: 'center' });
   doc.text(`Tahun Ajaran: ${teacher.tahunAjaran} | Semester: ${teacher.semester} | Tanggal: ${exam.date}`, 105, 29, { align: 'center' });
 
   doc.setLineWidth(0.6);
@@ -752,5 +766,5 @@ export function generateExamReportPdf(
     doc.text(`NIP. ${teacher.nip}`, 140, signY + 26);
   }
 
-  doc.save(`Laporan-Nilai-${exam.subject.replace(/\s+/g, '-')}-${exam.gradeClass}.pdf`);
+  doc.save(`Laporan-Nilai-${displaySubject.replace(/\s+/g, '-')}-${displayClass.replace(/\s+/g, '-')}.pdf`);
 }
