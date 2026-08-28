@@ -49,8 +49,10 @@ import {
   saveScanResultToFirestore, 
   saveBatchScanResultsToFirestore,
   saveExamToFirestore,
+  deleteExamFromFirestore,
   fetchStateFromFirestore 
 } from '@/lib/firestore-service';
+import { CheckCircle2, X } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('CAMERA');
@@ -69,6 +71,21 @@ export default function Home() {
   const [isStudentModalOpen, setIsStudentModalOpen] = useState<boolean>(false);
   const [isCloudModalOpen, setIsCloudModalOpen] = useState<boolean>(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState<boolean>(false);
+
+  // Global Toast Notification State
+  const [globalToast, setGlobalToast] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type?: 'success' | 'info' | 'error';
+  } | null>(null);
+
+  const triggerToast = (title: string, message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setGlobalToast({ show: true, title, message, type });
+    setTimeout(() => {
+      setGlobalToast(null);
+    }, 4500);
+  };
 
   // Client-side hydration from localStorage & Firestore
   useEffect(() => {
@@ -262,6 +279,54 @@ export default function Home() {
     setResults([]);
   };
 
+  // Exam management handlers with persistence & toasts
+  const handleSaveExam = (updated: ExamConfig) => {
+    setExams(prev => {
+      const exists = prev.some(e => e.id === updated.id);
+      const next = exists ? prev.map(e => e.id === updated.id ? updated : e) : [...prev, updated];
+      saveExams(next);
+      return next;
+    });
+    setActiveExamId(updated.id);
+    saveExamToFirestore(updated).catch(err => console.warn('Firestore exam write:', err));
+    triggerToast(
+      'Kunci Jawaban Berhasil Disimpan!',
+      `Kunci asesmen "${updated.title}" (${updated.totalQuestions} soal, ${updated.packets?.length || 1} paket) telah tersimpan dan siap digunakan.`,
+      'success'
+    );
+  };
+
+  const handleAddNewExam = (newExam: ExamConfig) => {
+    setExams(prev => {
+      const next = [...prev, newExam];
+      saveExams(next);
+      return next;
+    });
+    setActiveExamId(newExam.id);
+    saveExamToFirestore(newExam).catch(err => console.warn('Firestore new exam write:', err));
+    triggerToast(
+      'Asesmen Baru Dibuat!',
+      `Judul "${newExam.title}" berhasil ditambahkan ke database penilaian.`,
+      'success'
+    );
+  };
+
+  const handleDeleteExam = (examId: string) => {
+    const target = exams.find(e => e.id === examId);
+    const remaining = exams.filter(e => e.id !== examId);
+    if (remaining.length > 0) {
+      setExams(remaining);
+      saveExams(remaining);
+      setActiveExamId(remaining[0].id);
+      deleteExamFromFirestore(examId).catch(err => console.warn('Firestore delete exam:', err));
+      triggerToast(
+        'Asesmen Dihapus',
+        `Judul "${target?.title || 'Asesmen'}" telah dihapus.`,
+        'info'
+      );
+    }
+  };
+
   const currentAppState: AppState = {
     teacher,
     kyocera,
@@ -274,6 +339,31 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white font-sans antialiased print:bg-white print:min-h-0 print:p-0">
+      {/* Floating Global Toast Notification */}
+      {globalToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+            globalToast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'
+          }`}>
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0 pr-2">
+            <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+              {globalToast.title}
+            </h4>
+            <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+              {globalToast.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setGlobalToast(null)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top Navigation Bar with Main Menu & Master Data */}
       <Navbar
         activeTab={activeTab}
@@ -350,14 +440,7 @@ export default function Home() {
             key={`ljk-gen-${activeExam.id}-${activeExam.totalQuestions}-${activeExam.optionsCount}-${activeExam.updatedAt || ''}`}
             exam={activeExam}
             teacher={teacher}
-            onUpdateExam={(updated) => {
-              setExams(prev => {
-                const next = prev.map(e => e.id === updated.id ? updated : e);
-                saveExams(next);
-                return next;
-              });
-              saveExamToFirestore(updated).catch(() => {});
-            }}
+            onUpdateExam={handleSaveExam}
             onOpenExamModal={() => setIsExamModalOpen(true)}
           />
         )}
@@ -371,6 +454,7 @@ export default function Home() {
         onSaveTeacher={(updated) => {
           setTeacher(updated);
           saveTeacherProfile(updated);
+          triggerToast('Profil Guru Disimpan', 'Data nama pengampu dan sekolah berhasil diperbarui.', 'success');
         }}
       />
 
@@ -379,14 +463,11 @@ export default function Home() {
         isOpen={isExamModalOpen}
         onClose={() => setIsExamModalOpen(false)}
         exam={activeExam}
-        onSaveExam={(updated) => {
-          setExams(prev => {
-            const next = prev.map(e => e.id === updated.id ? updated : e);
-            saveExams(next);
-            return next;
-          });
-          saveExamToFirestore(updated).catch(() => {});
-        }}
+        exams={exams}
+        onSelectExam={(id) => setActiveExamId(id)}
+        onSaveExam={handleSaveExam}
+        onAddNewExam={handleAddNewExam}
+        onDeleteExam={handleDeleteExam}
       />
 
       <StudentListModal
@@ -397,6 +478,7 @@ export default function Home() {
         onUpdateStudents={(updated) => {
           setStudents(updated);
           saveStudents(updated);
+          triggerToast('Data Siswa Diperbarui', `${updated.length} data siswa berhasil disimpan ke database.`, 'success');
         }}
       />
 

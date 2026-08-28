@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Layers, 
   CheckCircle2, 
@@ -11,7 +11,14 @@ import {
   Key, 
   Sliders, 
   Copy, 
-  Wand2
+  Wand2,
+  ChevronDown,
+  ListFilter,
+  FileCheck2,
+  Eye,
+  Sparkles,
+  ClipboardCopy,
+  BookOpen
 } from 'lucide-react';
 import { ExamConfig, ExamPacket, OptionLetter } from '@/types/omr';
 
@@ -19,7 +26,11 @@ interface ExamConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   exam: ExamConfig;
+  exams?: ExamConfig[];
+  onSelectExam?: (id: string) => void;
   onSaveExam: (updated: ExamConfig) => void;
+  onAddNewExam?: (newExam: ExamConfig) => void;
+  onDeleteExam?: (id: string) => void;
 }
 
 // Helper to construct fully sanitized ExamConfig state with all keys initialized
@@ -67,22 +78,48 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
   isOpen,
   onClose,
   exam,
-  onSaveExam
+  exams = [],
+  onSelectExam,
+  onSaveExam,
+  onAddNewExam,
+  onDeleteExam
 }) => {
   const [form, setForm] = useState<ExamConfig>(() => sanitizeExamForm(exam));
   const [activePacketIndex, setActivePacketIndex] = useState<number>(0);
   const [quickKeyString, setQuickKeyString] = useState<string>('');
   const [isSaved, setIsSaved] = useState<boolean>(false);
-  const [toastMsg, setToastMsg] = useState<string>('');
+  const [toastMsg, setToastMsg] = useState<{ text: string; sub?: string } | null>(null);
+  const [viewKeySummary, setViewKeySummary] = useState<boolean>(true);
+  const [copiedPacket, setCopiedPacket] = useState<string | null>(null);
+
+  const [prevExam, setPrevExam] = useState(exam);
+  if (exam && exam !== prevExam) {
+    setPrevExam(exam);
+    setForm(sanitizeExamForm(exam));
+    setActivePacketIndex(0);
+  }
 
   if (!isOpen) return null;
 
   const currentPacket = form.packets[activePacketIndex] || form.packets[0] || { packetCode: 'A', keys: {} };
   const options: OptionLetter[] = form.optionsCount === 4 ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C', 'D', 'E'];
 
-  const showNotification = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 2500);
+  const showNotification = (text: string, sub?: string) => {
+    setToastMsg({ text, sub });
+    setTimeout(() => setToastMsg(null), 3500);
+  };
+
+  // Switch to another exam title from dropdown
+  const handleDropdownExamChange = (selectedId: string) => {
+    if (onSelectExam) {
+      onSelectExam(selectedId);
+    }
+    const targetExam = exams.find(e => e.id === selectedId);
+    if (targetExam) {
+      setForm(sanitizeExamForm(targetExam));
+      setActivePacketIndex(0);
+      showNotification(`Memuat asesmen: "${targetExam.title}"`, `${targetExam.totalQuestions} butir soal • ${targetExam.packets?.length || 1} paket`);
+    }
   };
 
   // Change single question answer key
@@ -124,7 +161,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
       packets: updatedPackets,
       questionWeights: updatedWeights
     });
-    showNotification(`Jumlah soal disetel ke ${clamped} butir`);
+    showNotification(`Jumlah butir soal disetel ke ${clamped} butir`);
   };
 
   // Change options count (4 vs 5)
@@ -222,6 +259,18 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
     showNotification(`Kunci dari Paket A berhasil disalin ke Paket ${currentPacket.packetCode}`);
   };
 
+  // Copy key string to clipboard
+  const handleCopyKeyString = (pkt: ExamPacket) => {
+    const keyStr = Array.from({ length: form.totalQuestions })
+      .map((_, i) => pkt.keys[i + 1] || 'A')
+      .join('');
+    
+    navigator.clipboard.writeText(keyStr);
+    setCopiedPacket(pkt.packetCode);
+    showNotification(`String kunci Paket ${pkt.packetCode} disalin!`, keyStr);
+    setTimeout(() => setCopiedPacket(null), 2000);
+  };
+
   // Add new packet (B, C, D)
   const handleAddPacket = () => {
     if (form.packets.length >= 4) return;
@@ -250,6 +299,66 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
     showNotification(`Paket ${targetCode} dihapus`);
   };
 
+  // Create new assessment
+  const handleCreateNewAssessment = () => {
+    const newId = `exam-${Date.now()}`;
+    const newExam: ExamConfig = {
+      id: newId,
+      title: `Penilaian Harian Baru (${exams.length + 1})`,
+      subject: form.subject || 'Mata Pelajaran',
+      gradeClass: form.gradeClass || 'Kelas 9',
+      date: form.date || new Date().toISOString().split('T')[0],
+      penaltyNegativeScore: 0,
+      kkm: form.kkm || 75,
+      totalQuestions: form.totalQuestions || 25,
+      optionsCount: form.optionsCount || 5,
+      packets: [{ packetCode: 'A', keys: {} }],
+      questionWeights: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const sanitized = sanitizeExamForm(newExam);
+    if (onAddNewExam) {
+      onAddNewExam(sanitized);
+    }
+    setForm(sanitized);
+    setActivePacketIndex(0);
+    showNotification(`Asesmen baru "${sanitized.title}" berhasil dibuat!`);
+  };
+
+  // Duplicate current assessment
+  const handleDuplicateAssessment = () => {
+    const dupId = `exam-${Date.now()}`;
+    const dupExam: ExamConfig = {
+      ...form,
+      id: dupId,
+      title: `${form.title} (Salinan)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const sanitized = sanitizeExamForm(dupExam);
+    if (onAddNewExam) {
+      onAddNewExam(sanitized);
+    }
+    setForm(sanitized);
+    setActivePacketIndex(0);
+    showNotification(`Duplikasi asesmen "${sanitized.title}" berhasil dibuat!`);
+  };
+
+  // Delete current assessment
+  const handleDeleteAssessment = () => {
+    if (exams.length <= 1) {
+      showNotification('Tidak dapat menghapus satu-satunya asesmen yang ada.');
+      return;
+    }
+    if (confirm(`Yakin ingin menghapus judul asesmen "${form.title}"?`)) {
+      if (onDeleteExam) {
+        onDeleteExam(form.id);
+      }
+      showNotification(`Asesmen "${form.title}" berhasil dihapus.`);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalForm = sanitizeExamForm({
@@ -258,30 +367,48 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
     });
     onSaveExam(finalForm);
     setIsSaved(true);
+    showNotification(
+      `Kunci Jawaban "${finalForm.title}" Berhasil Disimpan!`,
+      `Tersimpan: ${finalForm.totalQuestions} butir soal, ${finalForm.packets.length} paket (${finalForm.packets.map(p => p.packetCode).join(', ')}), KKM ${finalForm.kkm}`
+    );
     setTimeout(() => {
       setIsSaved(false);
-      onClose();
-    }, 600);
+    }, 1500);
+  };
+
+  // Helper to format keys in groups of 5 for scannability
+  const formatKeyGroups = (pkt: ExamPacket) => {
+    const groups: { range: string; keys: string }[] = [];
+    const step = 5;
+    for (let start = 1; start <= form.totalQuestions; start += step) {
+      const end = Math.min(start + step - 1, form.totalQuestions);
+      const str = Array.from({ length: end - start + 1 })
+        .map((_, i) => pkt.keys[start + i] || 'A')
+        .join(' ');
+      groups.push({ range: `${start}-${end}`, keys: str });
+    }
+    return groups;
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col my-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[94vh] flex flex-col my-auto animate-in fade-in zoom-in-95 duration-200">
+        
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shadow-xs shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
               <Key className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                 Kunci Jawaban & Bobot Penilaian Ujian
-                <span className="text-[10px] font-semibold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
                   {form.totalQuestions} Soal • {form.optionsCount} Pilihan (A-{form.optionsCount === 4 ? 'D' : 'E'})
                 </span>
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Atur jumlah butir soal, opsi pilihan ganda, kunci jawaban per paket (A, B, C, D), dan KKM kelulusan.
+                Pilih judul penilaian dari dropdown untuk melihat, menyalin, atau mengubah kunci jawaban & KKM.
               </p>
             </div>
           </div>
@@ -293,16 +420,184 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
           </button>
         </div>
 
-        {/* Floating notification toast if action performed */}
+        {/* Floating Success Notification Toast */}
         {toastMsg && (
-          <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{toastMsg}</span>
+          <div className="bg-emerald-50 border-2 border-emerald-400 text-emerald-900 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between shadow-md shadow-emerald-100 animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-emerald-950 text-xs">{toastMsg.text}</p>
+                {toastMsg.sub && <p className="text-[11px] text-emerald-800 font-mono font-medium">{toastMsg.sub}</p>}
+              </div>
+            </div>
+            <button 
+              onClick={() => setToastMsg(null)}
+              className="text-emerald-700 hover:text-emerald-950 p-1 hover:bg-emerald-100 rounded-md"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs flex-1 overflow-y-auto pr-1">
-          {/* Top Config Row: Exam metadata */}
+          
+          {/* SECTION 1: DROPDOWN PILIH JUDUL ASESMEN / PENILAIAN */}
+          <div className="p-3.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200 rounded-xl shadow-xs space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-slate-900 font-bold text-xs flex items-center gap-1.5">
+                <ListFilter className="w-4 h-4 text-blue-600" />
+                Pilih Judul Asesmen / Penilaian Tersimpan:
+              </label>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleCreateNewAssessment}
+                  className="px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 border border-blue-300 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors shadow-2xs"
+                >
+                  <Plus className="w-3.5 h-3.5 text-blue-600" /> + Tambah Asesmen Baru
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDuplicateAssessment}
+                  title="Duplikat asesmen dan kunci ini"
+                  className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-[11px] flex items-center gap-1 transition-colors shadow-2xs"
+                >
+                  <Copy className="w-3 h-3 text-slate-600" /> Duplikat
+                </button>
+                {exams.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAssessment}
+                    title="Hapus asesmen ini"
+                    className="p-1 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg transition-colors shadow-2xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Dropdown Menu for Saved Assessments */}
+            <div className="relative">
+              <select
+                value={form.id}
+                onChange={(e) => handleDropdownExamChange(e.target.value)}
+                className="w-full bg-white border-2 border-blue-300 text-slate-900 font-bold text-xs rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 cursor-pointer shadow-xs"
+              >
+                {exams.map((ex) => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title} — {ex.subject} ({ex.gradeClass}) • [{ex.totalQuestions} Soal | {ex.packets?.length || 1} Paket | KKM: {ex.kkm}]
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-700">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Assessment Quick Stats Pill */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
+                Mata Pelajaran: <strong className="text-slate-900">{form.subject}</strong>
+              </span>
+              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
+                Kelas: <strong className="text-slate-900">{form.gradeClass}</strong>
+              </span>
+              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
+                KKM: <strong className="text-emerald-700">{form.kkm}</strong>
+              </span>
+              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
+                Jumlah Paket: <strong className="text-blue-700">{form.packets.length} ({form.packets.map(p => p.packetCode).join(', ')})</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewKeySummary(!viewKeySummary)}
+                className="ml-auto text-blue-700 hover:text-blue-900 font-bold text-[11px] flex items-center gap-1 hover:underline"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {viewKeySummary ? 'Sembunyikan Ringkasan Kunci' : 'Tampilkan Ringkasan Kunci'}
+              </button>
+            </div>
+          </div>
+
+          {/* SECTION 2: HASIL KUNCI SETIAP PAKET TERSIMPAN (SUMMARY & STRING VIEWER) */}
+          {viewKeySummary && (
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-emerald-600" />
+                  <span className="font-bold text-slate-900 text-xs">
+                    Hasil Kunci Jawaban Tersimpan untuk: <span className="text-blue-700 font-extrabold">{form.title}</span>
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {form.totalQuestions} Butir Soal • {form.optionsCount} Pilihan (A-{form.optionsCount === 4 ? 'D' : 'E'})
+                </span>
+              </div>
+
+              {/* Grid of Packets and their keys */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {form.packets.map((pkt) => {
+                  const keyString = Array.from({ length: form.totalQuestions })
+                    .map((_, i) => pkt.keys[i + 1] || 'A')
+                    .join('');
+                  const isCopied = copiedPacket === pkt.packetCode;
+                  const groups = formatKeyGroups(pkt);
+
+                  return (
+                    <div 
+                      key={pkt.packetCode}
+                      className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 shadow-2xs hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
+                            {pkt.packetCode}
+                          </span>
+                          <span className="font-bold text-slate-800 text-xs">Paket {pkt.packetCode}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyKeyString(pkt)}
+                          className="px-2 py-1 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors"
+                        >
+                          {isCopied ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Tersalin!
+                            </>
+                          ) : (
+                            <>
+                              <ClipboardCopy className="w-3 h-3" /> Salin Kunci
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Continuous key string */}
+                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100 font-mono text-[11px] text-blue-900 tracking-wider break-all select-all font-bold">
+                        {keyString}
+                      </div>
+
+                      {/* Grouped keys preview */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 pt-1 text-[10px]">
+                        {groups.slice(0, 6).map((g, gi) => (
+                          <div key={gi} className="bg-slate-50/80 px-1.5 py-0.5 rounded border border-slate-100 text-slate-600">
+                            <span className="text-slate-400 font-medium mr-1">No {g.range}:</span>
+                            <span className="font-bold text-slate-900 font-mono">{g.keys}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 3: METADATA FORM ROW */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl shadow-xs">
             <div className="sm:col-span-2">
               <label className="block text-slate-700 font-semibold mb-1">Judul Penilaian / Asesmen</label>
@@ -337,7 +632,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Question Count & Options Selector Card */}
+          {/* SECTION 4: QUESTION COUNT & OPTIONS SELECTOR CARD */}
           <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-xl shadow-xs space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Jumlah Soal Presets & Custom Input */}
@@ -417,12 +712,12 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Packet Selector Tabs & Quick Tools */}
+          {/* SECTION 5: PACKET TABS & QUICK TOOLS */}
           <div className="space-y-2.5 pt-1">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
               {/* Packet Tabs */}
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-700 font-bold mr-1">Pilih Paket:</span>
+                <span className="text-slate-700 font-bold mr-1">Edit Kunci Paket:</span>
                 {form.packets.map((pkt, idx) => (
                   <div key={pkt.packetCode} className="flex items-center">
                     <button
@@ -515,7 +810,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Question Keys Grid */}
+          {/* SECTION 6: QUESTION KEYS GRID */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-slate-700 font-bold">
               <span>Klik huruf kunci jawaban untuk Paket {currentPacket.packetCode}:</span>
@@ -557,10 +852,11 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Footer Actions */}
+          {/* FOOTER ACTIONS */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
-            <div className="text-[11px] text-slate-500 font-medium">
-              💡 Perubahan kunci akan langsung berlaku untuk semua kalkulasi nilai scan dan laporan.
+            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Perubahan kunci tersimpan langsung aktif untuk penilaian scan kamera & ADF Kyocera.</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -568,7 +864,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
                 onClick={onClose}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors"
               >
-                Batal
+                Tutup
               </button>
               <button
                 type="submit"
@@ -577,7 +873,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
                 {isSaved ? (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                    Kunci Disimpan!
+                    Kunci Berhasil Disimpan!
                   </>
                 ) : (
                   <>

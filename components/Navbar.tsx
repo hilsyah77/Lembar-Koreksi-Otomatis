@@ -13,7 +13,8 @@ import {
   Layers, 
   Users,
   Database,
-  Cloud
+  Cloud,
+  Key
 } from 'lucide-react';
 import { ExamConfig, TeacherProfile, KyoceraSettings } from '@/types/omr';
 
@@ -127,28 +128,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Layers className="w-4 h-4 text-blue-600 shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                <span>Ujian Aktif</span>
-                <span className="text-slate-600">{activeExam.totalQuestions} Soal</span>
+                <span>Penilaian Aktif</span>
+                <span className="text-blue-700 font-extrabold">{activeExam.totalQuestions} Soal • {activeExam.packets?.length || 1} Pkt</span>
               </div>
               <select
                 value={activeExamId}
                 onChange={(e) => onSelectExam(e.target.value)}
-                aria-label="Pilih Ujian Aktif"
-                className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer truncate py-0.5"
+                aria-label="Pilih Ujian / Asesmen Aktif"
+                className="w-full bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer truncate py-0.5"
               >
                 {exams.map(ex => (
                   <option key={ex.id} value={ex.id}>
-                    {ex.title} ({ex.gradeClass})
+                    {ex.title} ({ex.gradeClass}) - {ex.totalQuestions} Soal
                   </option>
                 ))}
               </select>
             </div>
             <button
               onClick={onOpenExamModal}
-              title="Atur Kunci Jawaban & Bobot Nilai"
-              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 hover:text-slate-900 transition-colors shrink-0"
+              title="Lihat & Atur Kunci Jawaban Penilaian Ini"
+              className="px-2 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg text-blue-700 font-bold text-[11px] flex items-center gap-1 transition-colors shrink-0 shadow-2xs"
             >
-              <Settings className="w-4 h-4" />
+              <Key className="w-3.5 h-3.5" />
+              <span>Kunci</span>
             </button>
           </div>
 
