@@ -3,9 +3,9 @@ import { TeacherProfile, ExamConfig, Student, ScanResult, KyoceraSettings, Optio
 export const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
   namaGuru: '',
   nip: '',
-  namaSekolah: 'SMP / SMA / MTs / MA',
-  mataPelajaran: 'Mata Pelajaran',
-  tingkatKelas: 'Kelas IX',
+  namaSekolah: '',
+  mataPelajaran: '',
+  tingkatKelas: '',
   semester: 'Ganjil',
   tahunAjaran: '2025/2026',
   kkmDefault: 75,
@@ -14,14 +14,24 @@ export const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
 };
 
 export const DEFAULT_KYOCERA_CONFIG: KyoceraSettings = {
-  printerModel: 'Kyocera ECOSYS M2535dn (ADF 50 Sheets)',
+  scannerBrand: 'KYOCERA',
+  printerModel: 'Mesin ADF Scanner Otomatis (50 Lembar/Batch)',
   ipAddress: '192.168.1.185',
   port: 9010,
-  protocol: 'NETWORK_PUSH',
+  protocol: 'WSD_SCAN',
   resolutionDpi: 300,
   colorMode: 'GREYSCALE',
   duplexMode: 'SIMPLEX',
+  feederBatchCapacity: 50,
+  scanSpeed: 'FAST',
   autoSplitA4ToA5: true,
+  autoDeskew: true,
+  autoCrop: true,
+  sensitivity: 'NORMAL',
+  contrastThreshold: 50,
+  enableSoundNotification: true,
+  autoSaveToResults: true,
+  validateNisnWithStudentList: true,
   enableAutoCorrect: true,
   pollingIntervalSeconds: 3
 };
@@ -43,9 +53,9 @@ const defaultWeights: Record<number, number> = Object.fromEntries(
 export const SAMPLE_EXAMS: ExamConfig[] = [
   {
     id: 'exam-default-01',
-    title: 'Penilaian Harian (Ujian Baru)',
-    subject: 'Mata Pelajaran',
-    gradeClass: 'Kelas IX',
+    title: 'Penilaian Harian',
+    subject: '',
+    gradeClass: '',
     date: new Date().toISOString().slice(0, 10),
     totalQuestions: 25,
     optionsCount: 4,

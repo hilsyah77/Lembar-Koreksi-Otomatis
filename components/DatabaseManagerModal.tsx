@@ -248,7 +248,7 @@ export const DatabaseManagerModal: React.FC<DatabaseManagerModalProps> = ({
                       Reset ke Data Contoh Bawaan (Factory Demo)
                     </div>
                     <div className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-                      Mengembalikan database ke sampel bawaan (Ujian Matematika 25 Soal, 25 Siswa Kelas IX E - IX I, dan hasil simulasi).
+                      Mengembalikan database ke konfigurasi awal yang bersih dan segar.
                     </div>
                   </div>
                 </div>

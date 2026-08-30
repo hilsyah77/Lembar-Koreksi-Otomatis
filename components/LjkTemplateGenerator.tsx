@@ -262,7 +262,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
       {/* 5. Footer Calibration & Metadata */}
       <div className="flex items-center justify-between text-[7px] text-slate-600 print:text-black font-medium px-1 pt-0.5 border-t border-slate-300 print:border-black w-full">
-        <span>[LJK-A4-LANDSCAPE • SISWA {studentNo} • ID: {exam.id}] Terkalibrasi Kyocera M2535dn</span>
+        <span>[LJK-A4-LANDSCAPE • SISWA {studentNo} • ID: {exam.id}] Terkalibrasi OMR Scanner / Kamera</span>
         <span className="font-bold">KEMENAG / DISDIK</span>
       </div>
     </div>
@@ -842,7 +842,7 @@ export const LjkTemplateGenerator: React.FC<LjkTemplateGeneratorProps> = ({
 
                   {/* 5. Footer Calibration */}
                   <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-600 print:text-black font-medium px-2 pt-1 border-t border-slate-300 print:border-black">
-                    <span>[LJK-A4-FULL • ID: {exam.id}] Terkalibrasi Kyocera M2535dn</span>
+                    <span>[LJK-A4-FULL • ID: {exam.id}] Terkalibrasi OMR Scanner / Kamera</span>
                     <span className="font-bold">KEMENAG / DINAS PENDIDIKAN</span>
                   </div>
                 </div>

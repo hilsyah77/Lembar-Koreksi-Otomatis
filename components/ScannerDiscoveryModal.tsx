@@ -53,14 +53,16 @@ interface ScannerDiscoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentKyocera: KyoceraSettings;
-  onSelectScannerIp: (ip: string, model?: string) => void;
+  onSelectScannerIp: (ip: string, model?: string, port?: number, protocol?: any, scannerBrand?: any) => void;
 }
 
 const SUBNET_PRESETS = [
-  { id: '192.168.1', label: '192.168.1.x', desc: 'Default LAN / Kantor & Sekolah' },
-  { id: '192.168.0', label: '192.168.0.x', desc: 'Router TP-Link / D-Link / Lab' },
+  { id: '192.168.1', label: '192.168.1.x', desc: 'Default LAN / Kantor / Ruang TU' },
+  { id: '192.168.0', label: '192.168.0.x', desc: 'Router TP-Link / D-Link / Lab Komputer' },
   { id: '192.168.100', label: '192.168.100.x', desc: 'Indihome / ZTE / Huawei Modem' },
-  { id: '10.0.0', label: '10.0.0.x', desc: 'Jaringan Mikrotik / Terpadu' }
+  { id: '192.168.18', label: '192.168.18.x', desc: 'Fiberhome / Iconnet / FirstMedia' },
+  { id: '10.0.0', label: '10.0.0.x', desc: 'Jaringan Mikrotik / Hotspot Sekolah' },
+  { id: '172.16.0', label: '172.16.0.x', desc: 'Jaringan Terpadu Yayasan / Kampus' }
 ];
 
 export const ScannerDiscoveryModal: React.FC<ScannerDiscoveryModalProps> = ({
@@ -242,8 +244,14 @@ export const ScannerDiscoveryModal: React.FC<ScannerDiscoveryModalProps> = ({
     setTimeout(() => setCopiedIp(null), 2000);
   };
 
-  const handleApplyIp = (ip: string, modelName?: string) => {
-    onSelectScannerIp(ip, modelName);
+  const handleApplyIp = (
+    ip: string, 
+    modelName?: string, 
+    port?: number, 
+    protocol?: any, 
+    scannerBrand?: any
+  ) => {
+    onSelectScannerIp(ip, modelName, port, protocol, scannerBrand);
     playSuccessChime();
     onClose();
   };
@@ -486,7 +494,13 @@ export const ScannerDiscoveryModal: React.FC<ScannerDiscoveryModalProps> = ({
                         </a>
 
                         <button
-                          onClick={() => handleApplyIp(dev.ip, dev.model)}
+                          onClick={() => handleApplyIp(
+                            dev.ip, 
+                            dev.model, 
+                            dev.port, 
+                            dev.isKyocera ? 'WSD_SCAN' : 'DIRECT_HTTP', 
+                            dev.isKyocera ? 'KYOCERA' : (dev.manufacturer?.includes('Canon') ? 'CANON' : dev.manufacturer?.includes('Epson') ? 'EPSON' : 'GENERIC_TWAIN')
+                          )}
                           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all ${
                             isCurrent
                               ? 'bg-emerald-600 text-white hover:bg-emerald-700'

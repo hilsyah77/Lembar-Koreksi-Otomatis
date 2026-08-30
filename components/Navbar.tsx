@@ -3,7 +3,7 @@
 import React from 'react';
 import { 
   ScanLine, 
-  Printer, 
+  Printer,
   Table, 
   BarChart3, 
   History, 
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ExamConfig, TeacherProfile, KyoceraSettings } from '@/types/omr';
 
-export type TabType = 'CAMERA' | 'KYOCERA' | 'RESULTS' | 'ANALYTICS' | 'HISTORY' | 'LJK_TEMPLATE';
+export type TabType = 'CAMERA' | 'ADF_SCAN' | 'RESULTS' | 'ANALYTICS' | 'HISTORY' | 'LJK_TEMPLATE';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -27,7 +27,7 @@ interface NavbarProps {
   activeExamId: string;
   onSelectExam: (id: string) => void;
   teacher: TeacherProfile;
-  kyocera: KyoceraSettings;
+  kyocera?: KyoceraSettings;
   onOpenTeacherModal: () => void;
   onOpenExamModal: () => void;
   onOpenCloudModal: () => void;
@@ -62,10 +62,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       badgeColor: '',
     },
     {
-      id: 'KYOCERA' as TabType,
-      label: 'ADF Kyocera M2535dn',
+      id: 'ADF_SCAN' as TabType,
+      label: 'Scan Mesin ADF',
       icon: Printer,
-      badge: 'Auto 50 Lbr',
+      badge: 'Auto Feeder',
       badgeColor: 'bg-emerald-100 text-emerald-800',
     },
     {
@@ -100,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs print:hidden">
-      {/* Top Bar: Brand, Active Exam, and Master Data Buttons */}
+      {/* Top Bar: Brand and Master Data Action Buttons */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Left: Brand / Logo */}
@@ -117,56 +117,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   OMR
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium truncate max-w-[140px] sm:max-w-[220px]">
+              <p className="text-[11px] text-slate-500 font-medium truncate max-w-[150px] sm:max-w-[260px]">
                 {teacher.namaSekolah || 'Sistem Koreksi LJK'}
               </p>
             </div>
           </div>
 
-          {/* Center: Active Exam Selector Card */}
-          <div className="hidden md:flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 max-w-sm flex-1">
-            <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                <span>Penilaian Aktif</span>
-                <span className="text-blue-700 font-extrabold">{activeExam.totalQuestions} Soal • KKM {activeExam.kkm}</span>
-              </div>
-              <select
-                value={activeExamId}
-                onChange={(e) => onSelectExam(e.target.value)}
-                aria-label="Pilih Ujian / Asesmen Aktif"
-                className="w-full bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer truncate py-0.5"
-              >
-                {exams.map(ex => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.title} ({ex.gradeClass}) - {ex.totalQuestions} Soal
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
           {/* Right: Master Data & Quick Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Kyocera Status Pill */}
-            <button 
-              onClick={() => setActiveTab('KYOCERA')}
-              title={`Kyocera ADF Scanner Terhubung via IP ${kyocera.ipAddress}`}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-800 rounded-full border border-green-200 text-xs font-semibold hover:bg-green-100/80 transition-all shadow-2xs"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              <span className="font-sans text-xs hidden lg:inline">Kyocera M2535dn (Auto ADF)</span>
-              <span className="font-sans text-xs lg:hidden">ADF Auto</span>
-            </button>
-
             {/* Cloud Firestore Sync Button */}
             <button
               onClick={onOpenCloudModal}
               title="Sinkronisasi Cloud Firestore & Multi-Perangkat"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 hover:text-sky-900 text-xs font-bold transition-all shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 hover:text-sky-900 text-xs font-bold transition-all shadow-2xs cursor-pointer"
             >
               <Cloud className="w-3.5 h-3.5 text-sky-600" />
               <span className="hidden md:inline">Cloud Firestore</span>
@@ -176,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenStudentModal}
               title="Kelola Data Siswa & Nomor Peserta (NISN)"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 hover:text-purple-900 text-xs font-bold transition-all shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 hover:text-purple-900 text-xs font-bold transition-all shadow-2xs cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-purple-600" />
               <span className="hidden md:inline">Data Siswa</span>
@@ -186,7 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenTeacherModal}
               title="Profil Guru Pengampu & Pengesahan Sekolah"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-900 text-xs font-bold transition-all shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-900 text-xs font-bold transition-all shadow-2xs cursor-pointer"
             >
               <UserCheck className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden md:inline">Guru Pengampu</span>
@@ -196,39 +159,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenDatabaseModal}
               title="Kelola & Cadangkan Database Lokal"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition-all shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 text-xs font-bold transition-all shadow-2xs cursor-pointer"
             >
               <Database className="w-3.5 h-3.5 text-slate-600" />
               <span className="hidden lg:inline">Database & Backup</span>
             </button>
           </div>
-        </div>
-
-        {/* Mobile-only active exam selector */}
-        <div className="md:hidden pb-3 pt-1 flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-            <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-            <select
-              value={activeExamId}
-              onChange={(e) => onSelectExam(e.target.value)}
-              aria-label="Pilih Ujian Aktif"
-              className="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer truncate"
-            >
-              {exams.map(ex => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.title} ({ex.gradeClass})
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={onOpenExamModal}
-            title="Atur Kunci Jawaban & Bobot Asesmen"
-            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs transition-colors"
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>Kunci</span>
-          </button>
         </div>
       </div>
 
@@ -236,7 +172,61 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="border-t border-slate-200/80 bg-slate-50/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto py-2 scrollbar-none" aria-label="Menu Utama">
-            {navItems.map((item) => {
+            
+            {/* 1. Pindai Kamera Tab */}
+            {(() => {
+              const cameraItem = navItems[0];
+              const Icon = cameraItem.icon;
+              const isActive = activeTab === 'CAMERA';
+
+              return (
+                <button
+                  key="CAMERA"
+                  onClick={() => setActiveTab('CAMERA')}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 group cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                      : 'text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 hover:border-blue-300'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
+                  <span>{cameraItem.label}</span>
+                </button>
+              );
+            })()}
+
+            {/* 2. Navigasi Penilaian Aktif - Berada Tepat di Samping Pindai Kamera */}
+            <div className="flex items-center gap-1.5 bg-white border-2 border-blue-200 hover:border-blue-400 rounded-xl px-2.5 py-1 shadow-2xs transition-colors shrink-0">
+              <div className="flex items-center gap-1 text-blue-700 font-bold text-xs shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+                  <Layers className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <span className="hidden sm:inline text-[11px] font-bold text-slate-600">Penilaian:</span>
+              </div>
+
+              <select
+                value={activeExamId}
+                onChange={(e) => onSelectExam(e.target.value)}
+                aria-label="Pilih Penilaian / Asesmen Aktif"
+                className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer max-w-[150px] sm:max-w-[220px] md:max-w-[260px] truncate py-1"
+              >
+                {exams.map(ex => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title} {ex.gradeClass ? `(${ex.gradeClass})` : ''} • {ex.totalQuestions} Soal
+                  </option>
+                ))}
+              </select>
+
+              <span className="hidden lg:inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                KKM {activeExam.kkm}
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="h-5 w-px bg-slate-300 mx-1 shrink-0" />
+
+            {/* 3. Sisa Tab Navigasi: Kyocera, Hasil Koreksi, Analitik, Histori, Cetak LJK */}
+            {navItems.slice(1).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
 
@@ -244,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 group ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 group cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
                       : 'text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200'
@@ -266,7 +256,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Separator Divider */}
             <div className="h-5 w-px bg-slate-300 mx-1 shrink-0 hidden sm:block" />
 
-            {/* Tombol Kunci Jawaban - Ditempatkan Sederet Rapi Presisi Bersama Cetak LJK */}
+            {/* Tombol Kunci Jawaban */}
             <button
               type="button"
               onClick={onOpenExamModal}

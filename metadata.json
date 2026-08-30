@@ -1,6 +1,6 @@
 {
   "name": "Koreksi LJK Pro & Scanner ADF Kyocera",
-  "description": "Aplikasi Penilaian Otomatis Lembar Jawaban Komputer (LJK Standar 1 Lembar A4 & A4 Dibagi 2) dengan pemindaian kamera real-time, integrasi ADF Kyocera M2535dn, analisis butir soal, analitik performa kelas, dan ekspor laporan Excel/PDF.",
+  "description": "Aplikasi Penilaian Otomatis Lembar Jawaban Komputer (LJK Standar 1 Lembar A4 & A4 Dibagi 2) dengan pemindaian kamera real-time, analisis butir soal, analitik performa kelas, dan ekspor laporan Excel/PDF.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

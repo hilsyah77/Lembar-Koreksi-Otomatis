@@ -103,25 +103,44 @@ export default function Home() {
           saveExams(INITIAL_EXAMS);
           setActiveExamId(INITIAL_EXAM.id);
         } else if (storedExams && storedExams.length > 0) {
-          setExams(storedExams);
-          setActiveExamId(prev => storedExams.some(e => e.id === prev) ? prev : storedExams[0].id);
+          const cleanedStoredExams = storedExams.map(e => ({
+            ...e,
+            gradeClass: (e.gradeClass?.includes('IX E') || e.gradeClass?.includes('Kelas IX')) ? '' : e.gradeClass,
+            subject: e.subject === 'Mata Pelajaran' ? '' : e.subject
+          }));
+          setExams(cleanedStoredExams);
+          saveExams(cleanedStoredExams);
+          setActiveExamId(prev => cleanedStoredExams.some(e => e.id === prev) ? prev : cleanedStoredExams[0].id);
         }
 
         const storedStudents = getStoredStudents();
-        const hasLegacyDemoStudents = storedStudents.some(s => s.id?.startsWith('std-') && s.studentNo === '120101001');
-        if (hasLegacyDemoStudents) {
-          setStudents([]);
-          saveStudents([]);
+        const cleanedStudents = (storedStudents || []).filter(s => 
+          !s.classId?.includes('IX E') && 
+          !s.classId?.includes('IX F') && 
+          !s.classId?.includes('IX G') && 
+          !s.classId?.includes('IX H') && 
+          !s.classId?.includes('IX I') && 
+          !s.studentNo?.startsWith('00812345') &&
+          !(s.id?.startsWith('std-') && s.studentNo === '120101001')
+        );
+        if (cleanedStudents.length !== (storedStudents || []).length) {
+          setStudents(cleanedStudents);
+          saveStudents(cleanedStudents);
         } else if (storedStudents) {
           setStudents(storedStudents);
         }
 
         const storedTeacher = getStoredTeacherProfile();
-        if (storedTeacher && storedTeacher.namaGuru === 'Drs. H. Ahmad Sudrajat, M.Pd.') {
+        if (storedTeacher && (storedTeacher.namaGuru === 'Drs. H. Ahmad Sudrajat, M.Pd.' || storedTeacher.namaSekolah === 'SMP / SMA / MTs / MA')) {
           setTeacher(INITIAL_TEACHER_PROFILE);
           saveTeacherProfile(INITIAL_TEACHER_PROFILE);
         } else if (storedTeacher) {
-          setTeacher(storedTeacher);
+          const cleanedTeacher = {
+            ...storedTeacher,
+            tingkatKelas: (storedTeacher.tingkatKelas?.includes('IX E') || storedTeacher.tingkatKelas?.includes('Kelas IX')) ? '' : storedTeacher.tingkatKelas
+          };
+          setTeacher(cleanedTeacher);
+          saveTeacherProfile(cleanedTeacher);
         }
 
         const storedKyocera = getStoredKyoceraSettings();
@@ -148,17 +167,28 @@ export default function Home() {
         if (cloudData.exams && cloudData.exams.length > 0) {
           const cloudHasDemo = cloudData.exams.some(e => e.id === 'exam-pts-mat-2025' || e.id === 'exam-uh1-mat-2025');
           if (!cloudHasDemo) {
-            setExams(cloudData.exams);
-            saveExams(cloudData.exams);
-            setActiveExamId(prev => cloudData.exams!.some(e => e.id === prev) ? prev : cloudData.exams![0].id);
+            const cleanedCloudExams = cloudData.exams.map(e => ({
+              ...e,
+              gradeClass: (e.gradeClass?.includes('IX E') || e.gradeClass?.includes('Kelas IX')) ? '' : e.gradeClass,
+              subject: e.subject === 'Mata Pelajaran' ? '' : e.subject
+            }));
+            setExams(cleanedCloudExams);
+            saveExams(cleanedCloudExams);
+            setActiveExamId(prev => cleanedCloudExams.some(e => e.id === prev) ? prev : cleanedCloudExams[0].id);
           }
         }
         if (cloudData.students) {
-          const cloudStudentsDemo = cloudData.students.some(s => s.id?.startsWith('std-') && s.studentNo === '120101001');
-          if (!cloudStudentsDemo) {
-            setStudents(cloudData.students);
-            saveStudents(cloudData.students);
-          }
+          const cleanedCloudStudents = cloudData.students.filter(s => 
+            !s.classId?.includes('IX E') && 
+            !s.classId?.includes('IX F') && 
+            !s.classId?.includes('IX G') && 
+            !s.classId?.includes('IX H') && 
+            !s.classId?.includes('IX I') &&
+            !s.studentNo?.startsWith('00812345') &&
+            !(s.id?.startsWith('std-') && s.studentNo === '120101001')
+          );
+          setStudents(cleanedCloudStudents);
+          saveStudents(cleanedCloudStudents);
         }
         if (cloudData.results) {
           const cloudResultsDemo = cloudData.results.some(r => r.id?.startsWith('res-std-') || r.examId === 'exam-pts-mat-2025');
@@ -392,7 +422,7 @@ export default function Home() {
           />
         )}
 
-        {activeTab === 'KYOCERA' && (
+        {activeTab === 'ADF_SCAN' && (
           <KyoceraScannerHub
             exam={activeExam}
             students={students}

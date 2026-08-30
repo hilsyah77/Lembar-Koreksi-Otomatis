@@ -47,7 +47,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
   // Add Form State
   const [newNo, setNewNo] = useState<string>('');
   const [newName, setNewName] = useState<string>('');
-  const [newClass, setNewClass] = useState<string>('IX E');
+  const [newClass, setNewClass] = useState<string>('');
 
   // Inline Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -57,13 +57,13 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
 
   // Bulk Import State
   const [bulkText, setBulkText] = useState<string>('');
-  const [bulkDefaultClass, setBulkDefaultClass] = useState<string>('IX E');
+  const [bulkDefaultClass, setBulkDefaultClass] = useState<string>('');
   const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
 
   // Unique existing classes
   const uniqueClasses = useMemo(() => {
     const classes = Array.from(new Set(list.map(s => s.classId).filter(Boolean)));
-    return classes.length > 0 ? classes : ['IX E', 'IX F', 'IX G', 'IX H', 'IX I'];
+    return classes;
   }, [list]);
 
   // Duplicate NISN check
@@ -95,7 +95,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
     e.preventDefault();
     if (!newNo.trim() || !newName.trim()) return;
 
-    const classToAssign = newClass.trim() || 'IX E';
+    const classToAssign = newClass.trim() || '-';
     const cleanNo = newNo.replace(/\D/g, ''); // keep numbers only
     const formattedNo = cleanNo.length > 0 ? cleanNo.padStart(10, '0').slice(-10) : newNo.trim();
 
@@ -207,7 +207,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
         const cleanNo = rawNisn.replace(/\D/g, '');
         const studentNo = cleanNo.length > 0 ? cleanNo.padStart(10, '0').slice(-10) : `00${Math.floor(10000000 + Math.random() * 90000000)}`;
         const name = rawName || `Siswa ${studentNo}`;
-        const classId = rawClass || bulkDefaultClass || 'IX E';
+        const classId = rawClass || bulkDefaultClass || '';
 
         parsedStudents.push({
           id: `std-${Date.now()}-${r}-${Math.random().toString(36).substr(2, 5)}`,
@@ -336,11 +336,9 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
 
   const handleDownloadTemplate = () => {
     const templateRows = [
-      { 'NISN': '0081234501', 'Nama Siswa': 'Ahmad Fajar Prasetya', 'Kelas': 'IX E' },
-      { 'NISN': '0081234502', 'Nama Siswa': 'Aisyah Putri Rahmadani', 'Kelas': 'IX E' },
-      { 'NISN': '0081234503', 'Nama Siswa': 'Bagas Dwi Wicaksono', 'Kelas': 'IX E' },
-      { 'NISN': '0081234504', 'Nama Siswa': 'Cantika Dewi Lestari', 'Kelas': 'IX F' },
-      { 'NISN': '0081234505', 'Nama Siswa': 'Dimas Arya Nugraha', 'Kelas': 'IX F' }
+      { 'NISN': '0081234501', 'Nama Siswa': 'Ahmad Pratama', 'Kelas': '9A' },
+      { 'NISN': '0081234502', 'Nama Siswa': 'Aisyah Zahra', 'Kelas': '9A' },
+      { 'NISN': '0081234503', 'Nama Siswa': 'Budi Santoso', 'Kelas': '9B' }
     ];
     const ws = XLSX.utils.json_to_sheet(templateRows);
     const wb = XLSX.utils.book_new();
@@ -529,7 +527,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: IX E / 9A"
+                    placeholder="Nama Kelas (Contoh: 9A)"
                     value={newClass}
                     onChange={(e) => setNewClass(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:border-purple-500 shadow-xs"
@@ -810,7 +808,7 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                 rows={5}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
-                placeholder={`Format per baris: NISN [Tab/Koma] Nama Lengkap [Tab/Koma] Kelas\nContoh:\n0081234501\tAhmad Fajar\tIX E\n0081234502\tBudi Santoso\tIX F`}
+                placeholder={`Format per baris: NISN [Tab/Koma] Nama Lengkap [Tab/Koma] Kelas\nContoh:\n0081234501\tAhmad Pratama\t9A\n0081234502\tBudi Santoso\t9B`}
                 className="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-mono text-slate-800 focus:outline-none focus:border-purple-500 shadow-inner"
               />
 
@@ -819,11 +817,9 @@ export const StudentListModal: React.FC<StudentListModalProps> = ({
                   type="button"
                   onClick={() => {
                     setBulkText(
-                      `0081234511\tAditia Pratama\tIX E\n` +
-                      `0081234512\tAnisa Rahmawati\tIX F\n` +
-                      `0081234513\tBagus Tri Nugroho\tIX G\n` +
-                      `0081234514\tCantika Putri\tIX H\n` +
-                      `0081234515\tDimas Wahyu\tIX I`
+                      `0081234501\tAhmad Pratama\t9A\n` +
+                      `0081234502\tAnisa Rahmawati\t9A\n` +
+                      `0081234503\tBagus Tri Nugroho\t9B`
                     );
                   }}
                   className="text-xs text-purple-700 hover:text-purple-900 font-bold underline cursor-pointer"

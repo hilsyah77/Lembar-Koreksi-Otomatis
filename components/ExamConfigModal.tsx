@@ -408,7 +408,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
                 </span>
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Pilih judul penilaian dari dropdown untuk melihat, menyalin, atau mengubah kunci jawaban & KKM.
+                Atur dan pantau hasil simpan kunci jawaban, mata pelajaran & kelas, batas KKM, serta format penilaian aktif.
               </p>
             </div>
           </div>
@@ -443,167 +443,14 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs flex-1 overflow-y-auto pr-1">
           
-          {/* SECTION 1: DROPDOWN PILIH JUDUL ASESMEN / PENILAIAN */}
-          <div className="p-3.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200 rounded-xl shadow-xs space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="text-slate-900 font-bold text-xs flex items-center gap-1.5">
-                <ListFilter className="w-4 h-4 text-blue-600" />
-                Pilih Judul Asesmen / Penilaian Tersimpan:
-              </label>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleCreateNewAssessment}
-                  className="px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 border border-blue-300 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors shadow-2xs"
-                >
-                  <Plus className="w-3.5 h-3.5 text-blue-600" /> + Tambah Asesmen Baru
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDuplicateAssessment}
-                  title="Duplikat asesmen dan kunci ini"
-                  className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-[11px] flex items-center gap-1 transition-colors shadow-2xs"
-                >
-                  <Copy className="w-3 h-3 text-slate-600" /> Duplikat
-                </button>
-                {exams.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteAssessment}
-                    title="Hapus asesmen ini"
-                    className="p-1 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg transition-colors shadow-2xs"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Dropdown Menu for Saved Assessments */}
-            <div className="relative">
-              <select
-                value={form.id}
-                onChange={(e) => handleDropdownExamChange(e.target.value)}
-                className="w-full bg-white border-2 border-blue-300 text-slate-900 font-bold text-xs rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 cursor-pointer shadow-xs"
-              >
-                {exams.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.title} — {ex.subject} ({ex.gradeClass}) • [{ex.totalQuestions} Soal | {ex.packets?.length || 1} Paket | KKM: {ex.kkm}]
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-700">
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-
-            {/* Assessment Quick Stats Pill */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
-                Mata Pelajaran: <strong className="text-slate-900">{form.subject}</strong>
-              </span>
-              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
-                Kelas: <strong className="text-slate-900">{form.gradeClass}</strong>
-              </span>
-              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
-                KKM: <strong className="text-emerald-700">{form.kkm}</strong>
-              </span>
-              <span className="bg-white/80 border border-blue-200 text-slate-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">
-                Jumlah Paket: <strong className="text-blue-700">{form.packets.length} ({form.packets.map(p => p.packetCode).join(', ')})</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewKeySummary(!viewKeySummary)}
-                className="ml-auto text-blue-700 hover:text-blue-900 font-bold text-[11px] flex items-center gap-1 hover:underline"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                {viewKeySummary ? 'Sembunyikan Ringkasan Kunci' : 'Tampilkan Ringkasan Kunci'}
-              </button>
-            </div>
-          </div>
-
-          {/* SECTION 2: HASIL KUNCI SETIAP PAKET TERSIMPAN (SUMMARY & STRING VIEWER) */}
-          {viewKeySummary && (
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
-                  <span className="font-bold text-slate-900 text-xs">
-                    Hasil Kunci Jawaban Tersimpan untuk: <span className="text-blue-700 font-extrabold">{form.title}</span>
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium">
-                  {form.totalQuestions} Butir Soal • {form.optionsCount} Pilihan (A-{form.optionsCount === 4 ? 'D' : 'E'})
-                </span>
-              </div>
-
-              {/* Grid of Packets and their keys */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                {form.packets.map((pkt) => {
-                  const keyString = Array.from({ length: form.totalQuestions })
-                    .map((_, i) => pkt.keys[i + 1] || 'A')
-                    .join('');
-                  const isCopied = copiedPacket === pkt.packetCode;
-                  const groups = formatKeyGroups(pkt);
-
-                  return (
-                    <div 
-                      key={pkt.packetCode}
-                      className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 shadow-2xs hover:border-blue-300 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
-                            {pkt.packetCode}
-                          </span>
-                          <span className="font-bold text-slate-800 text-xs">Paket {pkt.packetCode}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyKeyString(pkt)}
-                          className="px-2 py-1 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors"
-                        >
-                          {isCopied ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Tersalin!
-                            </>
-                          ) : (
-                            <>
-                              <ClipboardCopy className="w-3 h-3" /> Salin Kunci
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Continuous key string */}
-                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100 font-mono text-[11px] text-blue-900 tracking-wider break-all select-all font-bold">
-                        {keyString}
-                      </div>
-
-                      {/* Grouped keys preview */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 pt-1 text-[10px]">
-                        {groups.slice(0, 6).map((g, gi) => (
-                          <div key={gi} className="bg-slate-50/80 px-1.5 py-0.5 rounded border border-slate-100 text-slate-600">
-                            <span className="text-slate-400 font-medium mr-1">No {g.range}:</span>
-                            <span className="font-bold text-slate-900 font-mono">{g.keys}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* SECTION 3: METADATA FORM ROW */}
+          {/* METADATA FORM ROW: PENILAIAN / ASESMEN, MAPEL & KELAS, BATAS KKM */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl shadow-xs">
             <div className="sm:col-span-2">
               <label className="block text-slate-700 font-semibold mb-1">Judul Penilaian / Asesmen</label>
               <input
                 type="text"
                 required
+                placeholder="Contoh: Penilaian Harian Matematika"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-900 font-semibold focus:outline-none focus:border-blue-500 shadow-xs"
@@ -614,6 +461,7 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
               <input
                 type="text"
                 required
+                placeholder="Contoh: IPA / 9A"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-900 focus:outline-none focus:border-blue-500 shadow-xs"
@@ -630,6 +478,153 @@ export const ExamConfigModal: React.FC<ExamConfigModalProps> = ({
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 shadow-xs"
               />
             </div>
+          </div>
+
+          {/* HASIL SIMPAN KUNCI & DATA PENILAIAN / ASESMEN */}
+          <div className="p-3.5 bg-gradient-to-r from-emerald-50/70 via-blue-50/50 to-indigo-50/60 border border-emerald-200/80 rounded-xl shadow-xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-2.5">
+              <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+                <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <BookOpen className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 mb-1">
+                    <ListFilter className="w-3.5 h-3.5 text-blue-600" />
+                    Pilih Judul Asesmen / Penilaian Tersimpan:
+                  </div>
+                  {exams && exams.length > 0 ? (
+                    <div className="relative max-w-md">
+                      <select
+                        value={form.id}
+                        onChange={(e) => handleDropdownExamChange(e.target.value)}
+                        className="w-full bg-white border border-emerald-300 text-slate-900 font-bold text-xs rounded-lg px-2.5 py-1.5 pr-8 appearance-none focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 cursor-pointer shadow-2xs"
+                      >
+                        {exams.map((ex) => (
+                          <option key={ex.id} value={ex.id}>
+                            {ex.title} {ex.subject ? `— ${ex.subject}` : ''} {ex.gradeClass ? `(${ex.gradeClass})` : ''} • [{ex.totalQuestions} Soal | KKM: {ex.kkm}]
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-700">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-blue-700 font-extrabold text-xs">
+                      {form.title || '(Judul Belum Diisi)'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleCreateNewAssessment}
+                  className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-emerald-600" /> + Tambah Asesmen
+                </button>
+
+                {exams.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAssessment}
+                    title="Hapus asesmen yang sedang dipilih"
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Hapus
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setViewKeySummary(!viewKeySummary)}
+                  className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-600" />
+                  {viewKeySummary ? 'Tutup Kunci' : 'Buka Kunci'}
+                </button>
+              </div>
+            </div>
+
+            {/* Assessment Meta Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-white border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-semibold text-[11px] shadow-2xs">
+                Asesmen: <strong className="text-slate-900">{form.title || '-'}</strong>
+              </span>
+              <span className="bg-white border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-semibold text-[11px] shadow-2xs">
+                Mapel & Kelas: <strong className="text-slate-900">{form.subject || '-'}</strong>
+              </span>
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg font-semibold text-[11px] shadow-2xs">
+                Batas KKM: <strong className="text-emerald-700 font-extrabold">{form.kkm}</strong>
+              </span>
+              <span className="bg-white border border-blue-200 text-blue-800 px-2.5 py-1 rounded-lg font-semibold text-[11px] shadow-2xs">
+                Soal & Opsi: <strong className="text-blue-700 font-extrabold">{form.totalQuestions} Soal (A-{form.optionsCount === 4 ? 'D' : 'E'})</strong>
+              </span>
+              <span className="bg-white border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-lg font-semibold text-[11px] shadow-2xs">
+                Total Paket: <strong className="text-indigo-700 font-extrabold">{form.packets.length} Paket ({form.packets.map(p => p.packetCode).join(', ')})</strong>
+              </span>
+            </div>
+
+            {/* Result of Saved Keys per Packet */}
+            {viewKeySummary && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                {form.packets.map((pkt) => {
+                  const keyString = Array.from({ length: form.totalQuestions })
+                    .map((_, i) => pkt.keys[i + 1] || 'A')
+                    .join('');
+                  const isCopied = copiedPacket === pkt.packetCode;
+                  const groups = formatKeyGroups(pkt);
+
+                  return (
+                    <div 
+                      key={pkt.packetCode}
+                      className="bg-white border border-emerald-200/80 rounded-xl p-3 space-y-2 shadow-2xs hover:border-blue-400 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-md bg-blue-600 text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">
+                            {pkt.packetCode}
+                          </span>
+                          <span className="font-bold text-slate-800 text-xs">Kunci Paket {pkt.packetCode}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyKeyString(pkt)}
+                          className="px-2 py-0.5 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded-md text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          {isCopied ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Tersalin!
+                            </>
+                          ) : (
+                            <>
+                              <ClipboardCopy className="w-3 h-3" /> Salin String Kunci
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Continuous Key String Viewer */}
+                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200 font-mono text-[11px] text-blue-950 tracking-wider break-all select-all font-bold">
+                        {keyString}
+                      </div>
+
+                      {/* Grouped Number Key Preview (5 numbers per group) */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 pt-0.5 text-[10px]">
+                        {groups.slice(0, 6).map((g, gi) => (
+                          <div key={gi} className="bg-slate-50/90 px-1.5 py-0.5 rounded border border-slate-200 text-slate-600">
+                            <span className="text-slate-400 font-medium mr-1">No {g.range}:</span>
+                            <span className="font-bold text-slate-900 font-mono">{g.keys}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* SECTION 4: QUESTION COUNT & OPTIONS SELECTOR CARD */}

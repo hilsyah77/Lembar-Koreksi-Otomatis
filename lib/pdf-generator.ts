@@ -226,7 +226,7 @@ export function generatePrintableLjkFullA4(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
   doc.text(
-    `[LJK STANDAR A4 • ID: ${exam.id}] Terkalibrasi ADF Kyocera ECOSYS M2535dn & Kamera Ponsel`,
+    `[LJK STANDAR A4 • ID: ${exam.id}] Terkalibrasi OMR Scanner & Kamera Ponsel`,
     marginLeft + 4,
     footerY
   );
@@ -424,7 +424,7 @@ export function generatePrintableLjkA4DividedBy2(
       // Bottom Bar
       doc.setFontSize(4.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`[LJK-A4-BAGI-2 • SISWA ${sheetIndex + 1}] Scan via Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
+      doc.text(`[LJK-A4-BAGI-2 • SISWA ${sheetIndex + 1}] Scan via OMR Scanner / Kamera`, startX + 4, startY + sheetH - 1.5);
     });
 
     // Horizontal Center Cut-Line (Garis Potong Tengah Bersih)
@@ -620,7 +620,7 @@ export function generatePrintableLjkA4DividedBy2(
       // Footer Info
       doc.setFontSize(4.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`[LJK-A4-LANDSCAPE • 140mm • SISWA ${sheetIndex + 1} • ID: ${exam.id}] Kyocera M2535dn`, startX + 4, startY + sheetH - 1.5);
+      doc.text(`[LJK-A4-LANDSCAPE • 140mm • SISWA ${sheetIndex + 1} • ID: ${exam.id}] OMR Scanner`, startX + 4, startY + sheetH - 1.5);
       doc.setFont('helvetica', 'bold');
       doc.text('KEMENAG / DISDIK', startX + sheetW - 4, startY + sheetH - 1.5, { align: 'right' });
     });

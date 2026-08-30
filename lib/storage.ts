@@ -214,9 +214,9 @@ export function purgeEntireDatabase(): AppState {
 
   const cleanExam: ExamConfig = {
     id: `exam-${Date.now()}`,
-    title: 'Ujian Baru (Belum Diberi Judul)',
-    subject: 'Mata Pelajaran',
-    gradeClass: 'Kelas IX E',
+    title: 'Penilaian Harian',
+    subject: '',
+    gradeClass: '',
     date: new Date().toISOString().slice(0, 10),
     totalQuestions: 25,
     optionsCount: 4,

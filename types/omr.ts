@@ -125,14 +125,26 @@ export interface StudentHistoryRecord {
 }
 
 export interface KyoceraSettings {
-  printerModel: string; // 'Kyocera ECOSYS M2535dn'
-  ipAddress: string; // e.g. '192.168.1.200'
-  port: number; // e.g. 9010 (Command Center RX / FTP port)
-  protocol: 'NETWORK_PUSH' | 'FTP_SERVER' | 'SMB_SHARE' | 'DIRECT_HTTP';
-  resolutionDpi: 200 | 300 | 400;
+  scannerBrand?: 'KYOCERA' | 'CANON' | 'EPSON' | 'BROTHER' | 'HP' | 'FUJITSU' | 'GENERIC_TWAIN';
+  printerModel: string; // e.g. 'Kyocera ECOSYS M2535dn (ADF 50 Sheets)' or 'Universal ADF Scanner'
+  ipAddress: string; // e.g. '192.168.1.185'
+  port: number; // e.g. 9010, 80, 443, 5357
+  protocol: 'NETWORK_PUSH' | 'FTP_SERVER' | 'SMB_SHARE' | 'DIRECT_HTTP' | 'WSD_SCAN' | 'TWAIN_RAW';
+  resolutionDpi: 150 | 200 | 300 | 400 | 600;
   colorMode: 'BLACK_WHITE' | 'GREYSCALE' | 'COLOR';
   duplexMode: 'SIMPLEX' | 'DUPLEX';
+  feederBatchCapacity?: number; // e.g. 50
+  scanSpeed?: 'NORMAL' | 'FAST' | 'HIGH_SPEED_TURBO';
   autoSplitA4ToA5: boolean; // Otomatis potong A4 menjadi 2 LJK A5
+  autoDeskew?: boolean; // Koreksi kemiringan kertas otomatis
+  autoCrop?: boolean; // Auto-align 4 marker fiducial sudut LJK
+  sensitivity?: 'LOW' | 'NORMAL' | 'HIGH' | 'STRICT'; // Sensitivitas arsiran OMR
+  contrastThreshold?: number; // Binarization / darkness threshold (10-90)
+  enableSoundNotification?: boolean; // Suara beep / notifikasi audio
+  autoSaveToResults?: boolean; // Langsung simpan ke hasil koreksi
+  validateNisnWithStudentList?: boolean; // Validasi NISN ke database siswa
+  lastVerifiedAt?: string; // Waktu terakhir IP diverifikasi
+  lastVerifiedStatus?: 'VERIFIED' | 'UNVERIFIED' | 'FAILED';
   enableAutoCorrect: boolean;
   pollingIntervalSeconds: number;
 }
